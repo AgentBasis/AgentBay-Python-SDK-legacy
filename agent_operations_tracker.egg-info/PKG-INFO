@@ -1,0 +1,112 @@
+Metadata-Version: 2.1
+Name: agent-operations-tracker
+Version: 1.0.0
+Summary: A library for tracking AI Agent operations and metrics
+Home-page: https://github.com/yourusername/agent-operations-tracker
+Author: Your Name
+Author-email: your.email@example.com
+License: UNKNOWN
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.7
+Description-Content-Type: text/markdown
+
+# Agent Operations Tracker
+
+A Python SDK for tracking AI Agent operations and metrics.
+
+## Installation
+
+```bash
+pip install agent-operations-tracker
+```
+
+Or install from source:
+
+```bash
+git clone https://github.com/yourusername/agent-operations-tracker.git
+cd agent-operations-tracker
+pip install -e .
+```
+
+## Usage
+
+First, set your API key as an environment variable:
+
+```bash
+export AGENT_TRACKER_API_KEY="your-api-key-here"
+```
+
+### Basic Usage
+
+```python
+from tracker import AgentOperationsTracker, AgentStatus, ConversationQuality
+
+# Initialize tracker
+tracker = AgentOperationsTracker(
+    base_url="https://your-backend-api.com",
+    api_key=os.getenv('AGENT_TRACKER_API_KEY')
+)
+
+# Register an agent
+tracker.register_agent("agent_001", sdk_version="1.0.0")
+
+# Update agent status
+tracker.update_agent_status("agent_001", AgentStatus.ACTIVE)
+
+# Start a conversation
+session_id = tracker.start_conversation("agent_001", user_id="user_123")
+
+# End conversation with quality score
+tracker.end_conversation(
+    session_id=session_id,
+    quality_score=ConversationQuality.GOOD,
+    user_feedback="Very helpful!"
+)
+
+# Get system overview
+overview = tracker.get_system_overview()
+```
+
+### Async Usage
+
+```python
+async with AgentOperationsTracker(
+    base_url="https://your-backend-api.com",
+    api_key=os.getenv('AGENT_TRACKER_API_KEY'),
+    enable_async=True
+) as tracker:
+    await tracker.register_agent_async("agent_002")
+    await tracker.update_agent_status_async("agent_002", AgentStatus.ACTIVE)
+```
+
+## Features
+
+- Secure API key handling
+- Both synchronous and asynchronous support
+- Comprehensive agent status tracking
+- Conversation quality monitoring
+- Failure tracking and reporting
+- System-wide metrics and overview
+- Secure logging with sensitive data masking
+
+## Security
+
+- API keys are handled securely
+- Sensitive data is masked in logs
+- Environment variable based configuration
+- Secure session management
+
+## Requirements
+
+- Python 3.7+
+- requests
+- aiohttp
+- python-dateutil
+
+## License
+
+MIT License 
+
