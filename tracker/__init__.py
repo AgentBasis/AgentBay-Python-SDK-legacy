@@ -7,18 +7,43 @@ A library for tracking AI Agent operations and metrics.
 from .AgentOper import (
     AgentOperationsTracker,
     AgentStatus,
-    ConversationQuality,
     APIResponse,
     SecureLogger,
-    SecureAPIClient
+    SecureAPIClient,
+    AgentRegistrationData,
+    AgentStatusData,
+    ActivityLogData
+)
+
+from .AgentPerform import (
+    AgentPerformanceTracker,
+    ConversationQuality,
+    ConversationStartData,
+    ConversationEndData,
+    PerformanceMetricsQuery
 )
 
 __version__ = "1.0.0"
 __all__ = [
+    # Agent Operations
     'AgentOperationsTracker',
     'AgentStatus',
+    'AgentRegistrationData',
+    'AgentStatusData',
+    'ActivityLogData',
+    
+    # Agent Performance
+    'AgentPerformanceTracker',
     'ConversationQuality',
+    'ConversationStartData',
+    'ConversationEndData',
+    'PerformanceMetricsQuery',
+    
+    # Shared Components
     'APIResponse',
     'SecureLogger',
     'SecureAPIClient'
-] 
+]
+
+# Note: Session tracking is now handled entirely by the backend.
+# The SDK no longer maintains local session state for lighter memory usage. 
