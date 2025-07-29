@@ -140,7 +140,7 @@ async def async_main():
     except Exception as e:
         logger.error("Error during async tracker operation: %s", str(e))
     finally:
-        await tracker.close()
+        await tracker.close_async()
 
 if __name__ == "__main__":
     # Verify API key is available

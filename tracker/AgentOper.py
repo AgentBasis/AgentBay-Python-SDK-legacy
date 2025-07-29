@@ -592,9 +592,17 @@ class AgentOperationsTracker:
         """Check if a session is currently active (locally tracked)"""
         return session_id in self._active_sessions
     
+    async def close_async(self):
+        """Close resources asynchronously"""
+        if hasattr(self, 'api_client') and self.api_client._async_session:
+            await self.api_client._async_session.close()
+            self.api_client._async_session = None
+        self.logger.info("AgentOperationsTracker closed securely")
+
     def close(self):
         """Close resources securely"""
-        self.api_client.close()
+        if hasattr(self, 'api_client'):
+            self.api_client.close()
         self.logger.info("AgentOperationsTracker closed securely")
     
     def __enter__(self):
@@ -611,5 +619,4 @@ class AgentOperationsTracker:
     
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         """Async context manager exit"""
-        if self._async_session and not self._async_session.closed:
-            await self._async_session.close()
+        await self.close_async()
