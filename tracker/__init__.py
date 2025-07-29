@@ -20,7 +20,8 @@ from .AgentPerform import (
     ConversationQuality,
     ConversationStartData,
     ConversationEndData,
-    PerformanceMetricsQuery
+    PerformanceMetricsQuery,
+    SessionInfo
 )
 
 __version__ = "1.0.0"
@@ -38,6 +39,7 @@ __all__ = [
     'ConversationStartData',
     'ConversationEndData',
     'PerformanceMetricsQuery',
+    'SessionInfo',
     
     # Shared Components
     'APIResponse',
