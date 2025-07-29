@@ -1,10 +1,10 @@
 Metadata-Version: 2.1
-Name: agent-operations-tracker
+Name: AI-HR-Agent
 Version: 1.0.0
-Summary: A library for tracking AI Agent operations and metrics
-Home-page: https://github.com/yourusername/agent-operations-tracker
-Author: Your Name
-Author-email: your.email@example.com
+Summary: A Python SDK for tracking AI Agent operations and metrics
+Home-page: https://github.com/AliUraish/AI-Agent-Managment-SDK
+Author: Ali Uraish
+Author-email: aliuraish@gmail.com
 License: UNKNOWN
 Platform: UNKNOWN
 Classifier: Programming Language :: Python :: 3
@@ -20,14 +20,14 @@ A Python SDK for tracking AI Agent operations and metrics.
 ## Installation
 
 ```bash
-pip install agent-operations-tracker
+pip install AI-HR-Agent
 ```
 
 Or install from source:
 
 ```bash
-git clone https://github.com/yourusername/agent-operations-tracker.git
-cd agent-operations-tracker
+git clone https://github.com/AliUraish/AI-Agent-Managment-SDK
+cd AI-HR-Agent
 pip install -e .
 ```
 
