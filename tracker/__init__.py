@@ -74,6 +74,9 @@ try:
         SecurityMetricEvent,
         TamperDetectionEvent,
         UnclosedSessionInfo,
+        OTELTracer,
+        detect_pii,
+        scan_metadata_for_pii,
         create_secure_performance_tracker,
         create_secure_operations_tracker
     )
@@ -116,6 +119,9 @@ if _SECURITY_AVAILABLE:
         "SecurityMetricEvent",
         "TamperDetectionEvent",
         "UnclosedSessionInfo",
+        "OTELTracer",
+        "detect_pii",
+        "scan_metadata_for_pii",
         "create_secure_performance_tracker",
         "create_secure_operations_tracker"
     ])
