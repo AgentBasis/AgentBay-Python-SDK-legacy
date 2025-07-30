@@ -65,6 +65,8 @@ from .AgentPerform import (
     QueuedEvent
 )
 
+from .LLMtracker import LLMTracker
+
 # Import security add-on components (optional)
 try:
     from .security import (
@@ -120,6 +122,9 @@ __all__ = [
     "SessionInfo",
     "QueuedEvent",
     "ConversationQuality",
+    
+    # LLM Usage Tracking
+    "LLMTracker",
     
     # API Response
     "APIResponse",
