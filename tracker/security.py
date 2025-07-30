@@ -94,22 +94,28 @@ def _compile_pii_patterns():
     """Compile and cache regex patterns for performance"""
     global _BASIC_PII_PATTERNS, _ADVANCED_PII_PATTERNS, _CREDIT_CARD_PATTERNS
     
-    if _BASIC_PII_PATTERNS is None:
-        _BASIC_PII_PATTERNS = [
-            # Email addresses
-            re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', re.IGNORECASE),
-            
-            # Phone numbers (more specific US and international formats)
-            re.compile(r'\b(?:\+?1[-.\s]?)?\(?[2-9][0-9]{2}\)?[-.\s]?[2-9][0-9]{2}[-.\s]?[0-9]{4}\b'),
-            re.compile(r'\b(?:\+[1-9]\d{0,3}[-.\s]?)?(?:\([0-9]{3,4}\)[-.\s]?)?[0-9]{3,4}[-.\s]?[0-9]{3,4}[-.\s]?[0-9]{3,4}\b'),
-            
-            # Social Security Numbers (must be 9 digits in XXX-XX-XXXX or XXXXXXXXX format)
-            re.compile(r'\b\d{3}-\d{2}-\d{4}\b'),
-            re.compile(r'\b(?<!\d)\d{9}(?!\d)\b'),
-            
-            # IP addresses (IPv4 - more strict validation)
-            re.compile(r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b'),
-        ]
+    # Always recompile to ensure latest patterns are used
+    _BASIC_PII_PATTERNS = [
+        # Email addresses
+        re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', re.IGNORECASE),
+        
+        # Phone numbers - US formats (simplified and working patterns)
+        # Format: (555) 123-4567
+        re.compile(r'\([0-9]{3}\)\s*[0-9]{3}[-.\s]?[0-9]{4}'),
+        # Format: 555-123-4567, 555.123.4567
+        re.compile(r'\b[0-9]{3}[-.\s][0-9]{3}[-.\s][0-9]{4}\b'),
+        # Format: +1-555-123-4567, +1 555 123 4567
+        re.compile(r'\+1[-.\s][0-9]{3}[-.\s][0-9]{3}[-.\s][0-9]{4}'),
+        # Format: +1 (555) 123-4567
+        re.compile(r'\+1\s*\([0-9]{3}\)\s*[0-9]{3}[-.\s]?[0-9]{4}'),
+        
+        # Social Security Numbers (exactly 9 digits in XXX-XX-XXXX format or XXXXXXXXX)
+        re.compile(r'\b\d{3}-\d{2}-\d{4}\b'),
+        re.compile(r'\b(?<!\d)\d{9}(?!\d)\b'),
+        
+        # IP addresses (IPv4 - strict validation, no invalid ranges like 999.999.999.999)
+        re.compile(r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b'),
+    ]
     
     if _ADVANCED_PII_PATTERNS is None:
         _ADVANCED_PII_PATTERNS = [
@@ -161,8 +167,8 @@ def detect_pii(text: str, enable_advanced: bool = True) -> bool:
     - Email addresses
     - Phone numbers (US/International formats)
     - Credit card numbers (with Luhn validation)
-    - Social Security Numbers
-    - IP addresses
+    - Social Security Numbers (with format validation)
+    - IP addresses (with range validation)
     
     Args:
         text: Text to scan for PII
@@ -177,10 +183,28 @@ def detect_pii(text: str, enable_advanced: bool = True) -> bool:
     # Ensure patterns are compiled
     _compile_pii_patterns()
     
-    # Check basic patterns with short-circuit evaluation
-    for pattern in _BASIC_PII_PATTERNS:
-        if pattern.search(text):
-            return True  # Short-circuit on first match
+    # Check email patterns first (most common)
+    if _BASIC_PII_PATTERNS[0].search(text):
+        return True
+    
+    # Check phone patterns with short-circuit
+    for phone_pattern in _BASIC_PII_PATTERNS[1:5]:  # Phone patterns (indices 1-4)
+        if phone_pattern.search(text):
+            return True
+    
+    # Check SSN patterns with validation
+    for ssn_pattern in _BASIC_PII_PATTERNS[5:7]:  # SSN patterns (indices 5-6)
+        for match in ssn_pattern.finditer(text):
+            ssn_candidate = match.group()
+            if _validate_ssn_format(ssn_candidate):
+                return True
+    
+    # Check IP addresses with validation
+    ip_pattern = _BASIC_PII_PATTERNS[7]  # IP pattern (index 7)
+    for match in ip_pattern.finditer(text):
+        ip_candidate = match.group()
+        if _validate_ip_address(ip_candidate):
+            return True
     
     # Advanced patterns (more computationally expensive)
     if enable_advanced:
@@ -233,6 +257,79 @@ def scan_metadata_for_pii(metadata: Optional[Dict[str, Any]], enable_advanced: b
         return False
     
     return _scan_value(metadata)
+
+def _validate_ip_address(ip_string: str) -> bool:
+    """
+    Validate if an IP address string represents a valid IPv4 address
+    
+    Args:
+        ip_string: IP address string to validate
+        
+    Returns:
+        bool: True if valid IPv4 address
+    """
+    try:
+        parts = ip_string.split('.')
+        if len(parts) != 4:
+            return False
+        
+        for part in parts:
+            # Check if part is numeric and in valid range
+            if not part.isdigit():
+                return False
+            num = int(part)
+            if num < 0 or num > 255:
+                return False
+            # Check for leading zeros (except for "0")
+            if len(part) > 1 and part[0] == '0':
+                return False
+        
+        return True
+    except:
+        return False
+
+def _validate_ssn_format(ssn_string: str) -> bool:
+    """
+    Validate if an SSN string represents a valid format
+    
+    Args:
+        ssn_string: SSN string to validate
+        
+    Returns:
+        bool: True if valid SSN format
+    """
+    # Remove any non-digit characters for length check
+    digits_only = ''.join(c for c in ssn_string if c.isdigit())
+    
+    # Must be exactly 9 digits
+    if len(digits_only) != 9:
+        return False
+    
+    # Check for obvious invalid patterns
+    invalid_ssns = [
+        '000000000', '111111111', '222222222', '333333333', '444444444',
+        '555555555', '666666666', '777777777', '888888888', '999999999'
+    ]
+    
+    if digits_only in invalid_ssns:
+        return False
+    
+    # Area number (first 3 digits) cannot be 000 or 666
+    area = int(digits_only[:3])
+    if area == 0 or area == 666:
+        return False
+    
+    # Group number (middle 2 digits) cannot be 00
+    group = int(digits_only[3:5])
+    if group == 0:
+        return False
+    
+    # Serial number (last 4 digits) cannot be 0000
+    serial = int(digits_only[5:9])
+    if serial == 0:
+        return False
+    
+    return True
 
 @dataclass
 class UnclosedSessionInfo:
