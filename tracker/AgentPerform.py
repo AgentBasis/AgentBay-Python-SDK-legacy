@@ -156,7 +156,7 @@ class AgentPerformanceTracker:
                  session_ttl_hours: float = 10.0,
                  cleanup_interval_minutes: int = 30,
                  backend_ttl_hours: float = 20.0,  # Backend persistence TTL
-                 max_cache_size: int = 10000,  # Maximum cache size for LRU
+                 max_cache_size: int = 50000,  # Maximum cache size for LRU (increased for scalability)
                  max_offline_queue_size: int = 5000,  # Maximum offline queue size
                  batch_notification_size: int = 50,  # Batch size for expiry notifications
                  logger: Optional[logging.Logger] = None):
@@ -169,7 +169,7 @@ class AgentPerformanceTracker:
             session_ttl_hours: Local cache TTL (default: 10 hours, sliding)
             cleanup_interval_minutes: Cache cleanup interval (default: 30 minutes)
             backend_ttl_hours: Backend persistence TTL (default: 20 hours)
-            max_cache_size: Maximum number of sessions in LRU cache
+            max_cache_size: Maximum number of sessions in LRU cache (default: 50,000)
             max_offline_queue_size: Maximum number of events in offline queue
             batch_notification_size: Number of notifications to batch together
             logger: Optional logger instance
@@ -216,8 +216,8 @@ class AgentPerformanceTracker:
         # Log initialization without exposing API key
         self.logger.info(
             self.secure_logger.format_log(
-                "AgentPerformanceTracker initialized with base URL: %s, Hybrid Model: Local TTL=%.1fh, Backend TTL=%.1fh, Max Cache=%d",
-                self.base_url, self.session_ttl_hours, self.backend_ttl_hours, self.max_cache_size
+                "AgentPerformanceTracker initialized with base URL: %s, Hybrid Model: Local TTL=%.1fh, Backend TTL=%.1fh, Max Cache=%dk",
+                self.base_url, self.session_ttl_hours, self.backend_ttl_hours, self.max_cache_size // 1000
             )
         )
     
