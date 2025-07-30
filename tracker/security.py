@@ -85,6 +85,54 @@ class SecurityFlags:
 
 # ============ PII DETECTION (Phase 2 Implementation) ============
 
+# Cached compiled regex patterns for performance
+_BASIC_PII_PATTERNS = None
+_ADVANCED_PII_PATTERNS = None
+_CREDIT_CARD_PATTERNS = None
+
+def _compile_pii_patterns():
+    """Compile and cache regex patterns for performance"""
+    global _BASIC_PII_PATTERNS, _ADVANCED_PII_PATTERNS, _CREDIT_CARD_PATTERNS
+    
+    if _BASIC_PII_PATTERNS is None:
+        _BASIC_PII_PATTERNS = [
+            # Email addresses
+            re.compile(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', re.IGNORECASE),
+            
+            # Phone numbers (more specific US and international formats)
+            re.compile(r'\b(?:\+?1[-.\s]?)?\(?[2-9][0-9]{2}\)?[-.\s]?[2-9][0-9]{2}[-.\s]?[0-9]{4}\b'),
+            re.compile(r'\b(?:\+[1-9]\d{0,3}[-.\s]?)?(?:\([0-9]{3,4}\)[-.\s]?)?[0-9]{3,4}[-.\s]?[0-9]{3,4}[-.\s]?[0-9]{3,4}\b'),
+            
+            # Social Security Numbers (must be 9 digits in XXX-XX-XXXX or XXXXXXXXX format)
+            re.compile(r'\b\d{3}-\d{2}-\d{4}\b'),
+            re.compile(r'\b(?<!\d)\d{9}(?!\d)\b'),
+            
+            # IP addresses (IPv4 - more strict validation)
+            re.compile(r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b'),
+        ]
+    
+    if _ADVANCED_PII_PATTERNS is None:
+        _ADVANCED_PII_PATTERNS = [
+            # Driver's License (US format examples)
+            re.compile(r'\b[A-Z]{1,2}[0-9]{6,8}\b', re.IGNORECASE),
+            
+            # Passport numbers (US format)
+            re.compile(r'\b[0-9]{9}\b'),
+            
+            # Bank account numbers (US routing + account)
+            re.compile(r'\b[0-9]{9}\s+[0-9]{8,17}\b'),
+        ]
+    
+    if _CREDIT_CARD_PATTERNS is None:
+        _CREDIT_CARD_PATTERNS = [
+            # Credit card patterns with brand identification
+            ('Visa', re.compile(r'\b4[0-9]{12}(?:[0-9]{3})?\b')),
+            ('MasterCard', re.compile(r'\b5[1-5][0-9]{14}\b')),
+            ('American Express', re.compile(r'\b3[47][0-9]{13}\b')),
+            ('Diners Club', re.compile(r'\b3[0-9]{13}\b')),
+            ('Discover', re.compile(r'\b6(?:011|5[0-9]{2})[0-9]{12}\b')),
+        ]
+
 def luhn_checksum(card_number: str) -> bool:
     """
     Validate credit card number using Luhn algorithm
@@ -107,9 +155,9 @@ def luhn_checksum(card_number: str) -> bool:
 
 def detect_pii(text: str, enable_advanced: bool = True) -> bool:
     """
-    Detect Personally Identifiable Information in text using regex patterns
+    Detect Personally Identifiable Information in text using cached regex patterns
     
-    Phase 2 Implementation: Detects common PII patterns:
+    Phase 2 Implementation: Detects common PII patterns with performance optimizations:
     - Email addresses
     - Phone numbers (US/International formats)
     - Credit card numbers (with Luhn validation)
@@ -126,61 +174,27 @@ def detect_pii(text: str, enable_advanced: bool = True) -> bool:
     if not text or not isinstance(text, str):
         return False
     
-    # Basic patterns (always checked)
-    basic_patterns = [
-        # Email addresses
-        r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
-        
-        # Phone numbers (more specific US and international formats)
-        r'\b(?:\+?1[-.\s]?)?\(?[2-9][0-9]{2}\)?[-.\s]?[2-9][0-9]{2}[-.\s]?[0-9]{4}\b',
-        r'\b(?:\+[1-9]\d{0,3}[-.\s]?)?(?:\([0-9]{3,4}\)[-.\s]?)?[0-9]{3,4}[-.\s]?[0-9]{3,4}[-.\s]?[0-9]{3,4}\b',
-        
-        # Social Security Numbers (must be 9 digits in XXX-XX-XXXX or XXXXXXXXX format)
-        r'\b\d{3}-\d{2}-\d{4}\b',
-        r'\b(?<!\d)\d{9}(?!\d)\b',
-        
-        # IP addresses (IPv4 - more strict validation)
-        r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b',
-    ]
+    # Ensure patterns are compiled
+    _compile_pii_patterns()
     
-    # Check basic patterns
-    for pattern in basic_patterns:
-        if re.search(pattern, text, re.IGNORECASE):
-            return True
+    # Check basic patterns with short-circuit evaluation
+    for pattern in _BASIC_PII_PATTERNS:
+        if pattern.search(text):
+            return True  # Short-circuit on first match
     
     # Advanced patterns (more computationally expensive)
     if enable_advanced:
         # Credit card detection with Luhn validation
-        credit_card_patterns = [
-            r'\b4[0-9]{12}(?:[0-9]{3})?\b',  # Visa
-            r'\b5[1-5][0-9]{14}\b',          # MasterCard
-            r'\b3[47][0-9]{13}\b',           # American Express
-            r'\b3[0-9]{13}\b',               # Diners Club
-            r'\b6(?:011|5[0-9]{2})[0-9]{12}\b', # Discover
-        ]
-        
-        for pattern in credit_card_patterns:
-            matches = re.finditer(pattern, text)
-            for match in matches:
+        for brand, pattern in _CREDIT_CARD_PATTERNS:
+            for match in pattern.finditer(text):
                 card_number = match.group().replace(' ', '').replace('-', '')
                 if luhn_checksum(card_number):
-                    return True
+                    return True  # Short-circuit on valid card
         
         # Additional advanced patterns
-        advanced_patterns = [
-            # Driver's License (US format examples)
-            r'\b[A-Z]{1,2}[0-9]{6,8}\b',
-            
-            # Passport numbers (US format)
-            r'\b[0-9]{9}\b',
-            
-            # Bank account numbers (US routing + account)
-            r'\b[0-9]{9}\s+[0-9]{8,17}\b',
-        ]
-        
-        for pattern in advanced_patterns:
-            if re.search(pattern, text, re.IGNORECASE):
-                return True
+        for pattern in _ADVANCED_PII_PATTERNS:
+            if pattern.search(text):
+                return True  # Short-circuit on first match
     
     return False
 
@@ -678,6 +692,11 @@ class SecurityWrapper:
         # Generate client ID if not provided
         self.client_id = client_id or f"security_client_{uuid.uuid4().hex[:12]}"
         
+        # Thread safety and graceful shutdown
+        self._daemon_stop_event = threading.Event()
+        self._daemon_thread: Optional[threading.Thread] = None
+        self._shutdown_complete = threading.Event()
+        
         # Initialize tracing
         if self.enable_tracing:
             self.tracer = OTELTracer(
@@ -715,10 +734,11 @@ class SecurityWrapper:
                 self._unclosed_sessions: Dict[str, Dict[str, Any]] = {}
                 self._sessions_lock = threading.RLock()
                 
-                # Offline event queue
+                # Offline event queue with thread-safe access
                 self._offline_queue = deque()
                 self._queue_lock = threading.RLock()
                 self._backend_available = True
+                self._queue_processing_event = threading.Event()
                 
                 # Batched unclosed sessions tracking
                 self._unclosed_sessions_batch: List[Dict[str, Any]] = []
@@ -744,195 +764,102 @@ class SecurityWrapper:
             self.security_api = None
             if self.verbose_security_logs:
                 self.logger.info("Security wrapper disabled")
-        
-        # Initialize daemon control
-        self._daemon_stop_event = threading.Event()
-        self._daemon_thread: Optional[threading.Thread] = None
     
     def _start_security_daemon(self, interval: int):
-        """Start the security monitoring daemon"""
+        """Start the security monitoring daemon with graceful shutdown support"""
         if not self.enable_security:
             return
             
         self._daemon_thread = threading.Thread(
             target=self._security_daemon,
             args=(interval,),
-            daemon=True
+            daemon=True,
+            name=f"SecurityDaemon-{self.client_id}"
         )
         self._daemon_thread.start()
-        self.logger.info("Security monitoring daemon started")
+        if self.verbose_security_logs:
+            self.logger.info("Security monitoring daemon started with graceful shutdown support")
     
     def _security_daemon(self, interval: int):
-        """Security monitoring daemon that runs periodic checks"""
-        while not self._daemon_stop_event.is_set():
-            try:
-                # Check for tampering
-                if self.security_manager:
-                    modified_files = self.security_manager.recheck_tampering()
-                    if modified_files:
-                        self._handle_tamper_detection("periodic_check")
-                
-                # Send unclosed sessions metric
+        """
+        Security monitoring daemon with graceful shutdown and cancellation support
+        
+        Uses threading.Event for cancellation signals and proper cleanup
+        """
+        try:
+            while not self._daemon_stop_event.is_set():
+                try:
+                    # Check for tampering
+                    if self.security_manager and not self._daemon_stop_event.is_set():
+                        modified_files = self.security_manager.recheck_tampering()
+                        if modified_files:
+                            self._handle_tamper_detection("periodic_check")
+                    
+                    # Send unclosed sessions metric
+                    if not self._daemon_stop_event.is_set():
+                        self._send_unclosed_sessions_metric()
+                    
+                    # Process offline queue with cancellation support
+                    if not self._daemon_stop_event.is_set():
+                        self._process_offline_queue()
+                    
+                    # Wait for next cycle with cancellation support
+                    if self._daemon_stop_event.wait(timeout=interval):
+                        # Event was set, graceful shutdown requested
+                        break
+                        
+                except Exception as e:
+                    if not self._daemon_stop_event.is_set():
+                        self.logger.error(f"Error in security daemon: {e}")
+                        # Wait shorter time on error, but still respect cancellation
+                        if self._daemon_stop_event.wait(timeout=60):
+                            break
+        
+        except Exception as e:
+            self.logger.error(f"Critical error in security daemon: {e}")
+        
+        finally:
+            # Perform final cleanup
+            self._final_cleanup()
+            self._shutdown_complete.set()
+            if self.verbose_security_logs:
+                self.logger.info("Security daemon shutdown complete")
+    
+    def _final_cleanup(self):
+        """Perform final cleanup when daemon shuts down"""
+        try:
+            # Process any remaining offline queue items
+            if hasattr(self, '_offline_queue'):
+                self._process_offline_queue(final_cleanup=True)
+            
+            # Send final unclosed sessions metric if needed
+            if hasattr(self, '_unclosed_sessions') and self._unclosed_sessions:
                 self._send_unclosed_sessions_metric()
                 
-                # Process offline queue
-                self._process_offline_queue()
-                
-                # Wait for next cycle
-                if self._daemon_stop_event.wait(timeout=interval):
-                    break
-                    
-            except Exception as e:
-                self.logger.error(f"Error in security daemon: {e}")
-                if self._daemon_stop_event.wait(timeout=60):  # Wait 1 minute on error
-                    break
+        except Exception as e:
+            self.logger.error(f"Error during final cleanup: {e}")
     
-    def _handle_tamper_detection(self, agent_id: str):
-        """Handle tamper detection by sending alert to backend"""
-        if not self.security_manager or not self.security_api:
-            return
+    def _process_offline_queue(self, final_cleanup: bool = False):
+        """
+        Process queued events when backend becomes available
         
-        # Start OTEL span for security operation
-        with self.tracer.trace_security_operation(
-            operation="tamper_detection",
-            event_type="tamper_detected",
-            client_id=self.client_id,
-            agent_id=agent_id
-        ) as span:
-            try:
-                event = self.security_manager.create_tamper_detection_event(agent_id)
-                
-                response = self.security_api.send_tamper_detection(event)
-                if response.success:
-                    if span:
-                        span.set_attribute("operation.success", True)
-                        span.set_attribute("modified_files_count", len(event.modified_files))
-                    self.logger.critical(f"SECURITY ALERT: Tamper detection sent for {len(event.modified_files)} files")
-                else:
-                    if span:
-                        span.set_attribute("operation.success", False)
-                        span.set_attribute("error", response.error or "Unknown error")
-                    self.logger.error(f"Failed to send tamper detection: {response.error}")
-                    self._queue_offline_event('tamper_detected', asdict(event))
-            
-            except Exception as e:
-                if span:
-                    span.set_status(Status(StatusCode.ERROR, str(e)))
-                    span.record_exception(e)
-                self.logger.error(f"Error handling tamper detection: {e}")
-    
-    def _send_unclosed_sessions_metric(self):
-        """Send unclosed sessions security metric with batching support"""
-        if not self.security_manager or not self.security_api:
-            return
-        
-        # Start OTEL span for security operation
-        with self.tracer.trace_security_operation(
-            operation="unclosed_sessions_metric",
-            event_type="unclosed_sessions",
-            client_id=self.client_id
-        ) as span:
-            try:
-                unclosed_list = []
-                
-                with self._sessions_lock:
-                    if not self._unclosed_sessions:
-                        return  # No unclosed sessions to report
-                    
-                    # Collect unclosed sessions data
-                    for session_id, session_data in self._unclosed_sessions.items():
-                        start_time = datetime.fromisoformat(session_data['start_time'])
-                        duration_hours = (datetime.now() - start_time).total_seconds() / 3600
-                        
-                        unclosed_list.append({
-                            "session_id": session_id,
-                            "start_time": session_data['start_time'],
-                            "agent_id": session_data['agent_id'],
-                            "duration_hours": round(duration_hours, 2)
-                        })
-                
-                if not unclosed_list:
-                    return
-                
-                if self.batch_unclosed_sessions and len(unclosed_list) > self.max_unclosed_batch_size:
-                    # Send in batches for performance
-                    batches = [unclosed_list[i:i + self.max_unclosed_batch_size] 
-                              for i in range(0, len(unclosed_list), self.max_unclosed_batch_size)]
-                    
-                    total_sent = 0
-                    for batch in batches:
-                        event = self.security_manager.create_unclosed_sessions_metric(
-                            agent_id="security_daemon",
-                            unclosed_sessions=batch
-                        )
-                        
-                        response = self.security_api.send_unclosed_sessions_metric(event)
-                        if response.success:
-                            total_sent += len(batch)
-                            if self.verbose_security_logs:
-                                self.logger.info(f"Sent unclosed sessions batch: {len(batch)} sessions")
-                        else:
-                            if span:
-                                span.set_attribute("operation.success", False)
-                                span.set_attribute("error", response.error or "Unknown error")
-                            self.logger.error(f"Failed to send unclosed sessions batch: {response.error}")
-                            self._queue_offline_event('unclosed_sessions', asdict(event))
-                            break
-                    
-                    if span and total_sent > 0:
-                        span.set_attribute("operation.success", True)
-                        span.set_attribute("unclosed_sessions_count", total_sent)
-                        span.set_attribute("batches_sent", len(batches))
-                    
-                    if total_sent > 0:
-                        self.logger.warning(f"SECURITY METRIC: {total_sent} unclosed sessions reported in {len(batches)} batches")
-                
-                else:
-                    # Send all at once (small dataset)
-                    event = self.security_manager.create_unclosed_sessions_metric(
-                        agent_id="security_daemon",
-                        unclosed_sessions=unclosed_list
-                    )
-                    
-                    response = self.security_api.send_unclosed_sessions_metric(event)
-                    if response.success:
-                        if span:
-                            span.set_attribute("operation.success", True)
-                            span.set_attribute("unclosed_sessions_count", len(unclosed_list))
-                        self.logger.warning(f"SECURITY METRIC: {len(unclosed_list)} unclosed sessions reported")
-                    else:
-                        if span:
-                            span.set_attribute("operation.success", False)
-                            span.set_attribute("error", response.error or "Unknown error")
-                        self.logger.error(f"Failed to send unclosed sessions metric: {response.error}")
-                        self._queue_offline_event('unclosed_sessions', asdict(event))
-            
-            except Exception as e:
-                if span:
-                    span.set_status(Status(StatusCode.ERROR, str(e)))
-                    span.record_exception(e)
-                self.logger.error(f"Error sending unclosed sessions metric: {e}")
-    
-    def _queue_offline_event(self, event_type: str, event_data: Dict[str, Any]):
-        """Queue event for later transmission when backend is available"""
-        with self._queue_lock:
-            self._offline_queue.append({
-                'type': event_type,
-                'data': event_data,
-                'timestamp': datetime.now().isoformat(),
-                'retry_count': 0
-            })
-            self._backend_available = False
-            self.logger.info(f"Queued {event_type} event for offline transmission")
-    
-    def _process_offline_queue(self):
-        """Process queued events when backend becomes available"""
+        Args:
+            final_cleanup: If True, process all items without cancellation checks
+        """
         if not self._offline_queue:
             return
         
         with self._queue_lock:
-            while self._offline_queue:
+            processed_count = 0
+            max_process = len(self._offline_queue) if final_cleanup else 10  # Limit during normal operation
+            
+            while self._offline_queue and processed_count < max_process:
+                # Check for cancellation (unless final cleanup)
+                if not final_cleanup and self._daemon_stop_event.is_set():
+                    break
+                
                 event = self._offline_queue.popleft()
+                processed_count += 1
                 
                 try:
                     if event['type'] == 'tamper_detected':
@@ -947,7 +874,8 @@ class SecurityWrapper:
                         continue
                     
                     if response.success:
-                        self.logger.info(f"Replayed {event['type']} event successfully")
+                        if self.verbose_security_logs:
+                            self.logger.info(f"Replayed {event['type']} event successfully")
                         self._backend_available = True
                     else:
                         # Requeue with retry limit
@@ -1227,12 +1155,164 @@ class SecurityWrapper:
         
         return base_stats
     
+    def _handle_tamper_detection(self, agent_id: str):
+        """Handle tamper detection by sending alert to backend"""
+        if not self.security_manager or not self.security_api:
+            return
+        
+        # Start OTEL span for security operation
+        with self.tracer.trace_security_operation(
+            operation="tamper_detection",
+            event_type="tamper_detected",
+            client_id=self.client_id,
+            agent_id=agent_id
+        ) as span:
+            try:
+                event = self.security_manager.create_tamper_detection_event(agent_id)
+                
+                response = self.security_api.send_tamper_detection(event)
+                if response.success:
+                    if span:
+                        span.set_attribute("operation.success", True)
+                        span.set_attribute("modified_files_count", len(event.modified_files))
+                    self.logger.critical(f"SECURITY ALERT: Tamper detection sent for {len(event.modified_files)} files")
+                else:
+                    if span:
+                        span.set_attribute("operation.success", False)
+                        span.set_attribute("error", response.error or "Unknown error")
+                    self.logger.error(f"Failed to send tamper detection: {response.error}")
+                    self._queue_offline_event('tamper_detected', asdict(event))
+            
+            except Exception as e:
+                if span:
+                    span.set_status(Status(StatusCode.ERROR, str(e)))
+                    span.record_exception(e)
+                self.logger.error(f"Error handling tamper detection: {e}")
+    
+    def _send_unclosed_sessions_metric(self):
+        """Send unclosed sessions security metric with batching support"""
+        if not self.security_manager or not self.security_api:
+            return
+        
+        # Start OTEL span for security operation
+        with self.tracer.trace_security_operation(
+            operation="unclosed_sessions_metric",
+            event_type="unclosed_sessions",
+            client_id=self.client_id
+        ) as span:
+            try:
+                unclosed_list = []
+                
+                with self._sessions_lock:
+                    if not self._unclosed_sessions:
+                        return  # No unclosed sessions to report
+                    
+                    # Collect unclosed sessions data
+                    for session_id, session_data in self._unclosed_sessions.items():
+                        start_time = datetime.fromisoformat(session_data['start_time'])
+                        duration_hours = (datetime.now() - start_time).total_seconds() / 3600
+                        
+                        unclosed_list.append({
+                            "session_id": session_id,
+                            "start_time": session_data['start_time'],
+                            "agent_id": session_data['agent_id'],
+                            "duration_hours": round(duration_hours, 2)
+                        })
+                
+                if not unclosed_list:
+                    return
+                
+                if self.batch_unclosed_sessions and len(unclosed_list) > self.max_unclosed_batch_size:
+                    # Send in batches for performance
+                    batches = [unclosed_list[i:i + self.max_unclosed_batch_size] 
+                              for i in range(0, len(unclosed_list), self.max_unclosed_batch_size)]
+                    
+                    total_sent = 0
+                    for batch in batches:
+                        # Check for cancellation during batch processing
+                        if self._daemon_stop_event.is_set():
+                            break
+                            
+                        event = self.security_manager.create_unclosed_sessions_metric(
+                            agent_id="security_daemon",
+                            unclosed_sessions=batch
+                        )
+                        
+                        response = self.security_api.send_unclosed_sessions_metric(event)
+                        if response.success:
+                            total_sent += len(batch)
+                            if self.verbose_security_logs:
+                                self.logger.info(f"Sent unclosed sessions batch: {len(batch)} sessions")
+                        else:
+                            if span:
+                                span.set_attribute("operation.success", False)
+                                span.set_attribute("error", response.error or "Unknown error")
+                            self.logger.error(f"Failed to send unclosed sessions batch: {response.error}")
+                            self._queue_offline_event('unclosed_sessions', asdict(event))
+                            break
+                    
+                    if span and total_sent > 0:
+                        span.set_attribute("operation.success", True)
+                        span.set_attribute("unclosed_sessions_count", total_sent)
+                        span.set_attribute("batches_sent", len(batches))
+                    
+                    if total_sent > 0:
+                        self.logger.warning(f"SECURITY METRIC: {total_sent} unclosed sessions reported in {len(batches)} batches")
+                
+                else:
+                    # Send all at once (small dataset)
+                    event = self.security_manager.create_unclosed_sessions_metric(
+                        agent_id="security_daemon",
+                        unclosed_sessions=unclosed_list
+                    )
+                    
+                    response = self.security_api.send_unclosed_sessions_metric(event)
+                    if response.success:
+                        if span:
+                            span.set_attribute("operation.success", True)
+                            span.set_attribute("unclosed_sessions_count", len(unclosed_list))
+                        self.logger.warning(f"SECURITY METRIC: {len(unclosed_list)} unclosed sessions reported")
+                    else:
+                        if span:
+                            span.set_attribute("operation.success", False)
+                            span.set_attribute("error", response.error or "Unknown error")
+                        self.logger.error(f"Failed to send unclosed sessions metric: {response.error}")
+                        self._queue_offline_event('unclosed_sessions', asdict(event))
+            
+            except Exception as e:
+                if span:
+                    span.set_status(Status(StatusCode.ERROR, str(e)))
+                    span.record_exception(e)
+                self.logger.error(f"Error sending unclosed sessions metric: {e}")
+    
+    def _queue_offline_event(self, event_type: str, event_data: Dict[str, Any]):
+        """Queue event for later transmission when backend is available"""
+        with self._queue_lock:
+            self._offline_queue.append({
+                'type': event_type,
+                'data': event_data,
+                'timestamp': datetime.now().isoformat(),
+                'retry_count': 0
+            })
+            self._backend_available = False
+            if self.verbose_security_logs:
+                self.logger.info(f"Queued {event_type} event for offline transmission")
+    
     def close(self):
-        """Close security wrapper and underlying tracker"""
-        # Stop security daemon
+        """Close security wrapper and underlying tracker with graceful shutdown"""
+        if self.verbose_security_logs:
+            self.logger.info("Initiating graceful shutdown of security wrapper")
+        
+        # Signal daemon to stop
         if self._daemon_thread and self._daemon_thread.is_alive():
             self._daemon_stop_event.set()
-            self._daemon_thread.join(timeout=5)
+            
+            # Wait for daemon to complete shutdown (with timeout)
+            if not self._shutdown_complete.wait(timeout=10):
+                self.logger.warning("Security daemon did not shut down gracefully within timeout")
+            else:
+                if self.verbose_security_logs:
+                    self.logger.info("Security daemon shut down gracefully")
         
         # Close security API client
         if self.security_api:
@@ -1242,14 +1322,30 @@ class SecurityWrapper:
         if hasattr(self.tracker, 'close'):
             self.tracker.close()
         
-        self.logger.info("Security wrapper closed")
+        if self.verbose_security_logs:
+            self.logger.info("Security wrapper closed successfully")
     
     async def close_async(self):
-        """Close security wrapper and underlying tracker (async)"""
-        # Stop security daemon
+        """Close security wrapper and underlying tracker (async) with graceful shutdown"""
+        if self.verbose_security_logs:
+            self.logger.info("Initiating graceful async shutdown of security wrapper")
+        
+        # Signal daemon to stop
         if self._daemon_thread and self._daemon_thread.is_alive():
             self._daemon_stop_event.set()
-            self._daemon_thread.join(timeout=5)
+            
+            # Wait for daemon to complete shutdown (with timeout)
+            # Use asyncio.to_thread for async compatibility
+            import asyncio
+            try:
+                await asyncio.wait_for(
+                    asyncio.to_thread(self._shutdown_complete.wait),
+                    timeout=10
+                )
+                if self.verbose_security_logs:
+                    self.logger.info("Security daemon shut down gracefully (async)")
+            except asyncio.TimeoutError:
+                self.logger.warning("Security daemon did not shut down gracefully within timeout (async)")
         
         # Close security API client
         if self.security_api:
@@ -1261,7 +1357,8 @@ class SecurityWrapper:
         elif hasattr(self.tracker, 'close'):
             self.tracker.close()
         
-        self.logger.info("Security wrapper closed (async)")
+        if self.verbose_security_logs:
+            self.logger.info("Security wrapper closed successfully (async)")
 
 # ============ FACTORY FUNCTIONS ============
 
