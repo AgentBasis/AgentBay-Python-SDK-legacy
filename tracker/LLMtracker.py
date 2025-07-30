@@ -1,6 +1,6 @@
 # llm_tracker.py
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 
 class LLMTracker:
     def __init__(self, backend_url: str):
@@ -20,7 +20,7 @@ class LLMTracker:
     def _record(self, provider, model, prompt_tokens, completion_tokens):
         total = prompt_tokens + completion_tokens
         payload = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "provider": provider,
             "model": model,
             "prompt_tokens": prompt_tokens,
