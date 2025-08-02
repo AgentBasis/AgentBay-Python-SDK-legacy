@@ -1017,41 +1017,36 @@ class SecurityWrapper:
     
     # ============ WRAPPER METHODS FOR AgentPerformanceTracker ============
     
-    def start_conversation(self, agent_id: str, user_id: Optional[str] = None,
-                          metadata: Optional[Dict[str, Any]] = None) -> Optional[str]:
-        """Start conversation with security features and OTEL tracing"""
+    def start_conversation(self, agent_id: str, metadata: Optional[Dict[str, Any]] = None) -> Optional[str]:
+        """Start a conversation with security checks"""
+        # Add security flags to metadata
+        metadata = metadata or {}
+        metadata['security_flags'] = {
+            'tamper_detected': False,  # Default to False if not available
+            'pii_detected': False,     # Default to False if not available
+            'compliance_violation': False  # Set by compliance wrapper if used
+        }
+        
+        # Scan metadata for PII if available
+        if hasattr(self.security_manager, 'scan_metadata_for_pii'):
+            if self.security_manager.scan_metadata_for_pii(metadata):
+                metadata['security_flags']['pii_detected'] = True
+        
         # Start OTEL span
-        with self.tracer.trace_session_operation(
-            operation="start_conversation",
-            agent_id=agent_id,
-            client_id=self.client_id,
-            user_id=user_id
-        ) as span:
-            try:
-                # PII detection on metadata
-                if self.enable_security and self.security_manager:
-                    self.security_manager.scan_for_pii(metadata=metadata)
-                
-                # Call original method with correct signature
-                session_id = self.tracker.start_conversation(agent_id, user_id, metadata)
-                
-                # Add session_id to span
-                if session_id and span:
-                    span.set_attribute("session.id", session_id)
-                    span.set_attribute("operation.success", True)
-                
-                # Add security tracking
-                if session_id and self.enable_security:
-                    self._track_session_start(session_id, agent_id)
-                
-                return session_id
-                
-            except Exception as e:
-                if span:
-                    span.set_status(Status(StatusCode.ERROR, str(e)))
-                    span.record_exception(e)
-                self.logger.error(f"Error in start_conversation: {e}")
-                raise
+        with self.tracer.start_span('start_conversation') as span:
+            span.set_attribute('agent_id', agent_id)
+            span.set_attribute('has_metadata', bool(metadata))
+            
+            # Call wrapped tracker
+            session_id = self.tracker.start_conversation(agent_id, metadata)
+            
+            if session_id:
+                span.set_attribute('session_id', session_id)
+                span.set_status(Status(StatusCode.OK))
+            else:
+                span.set_status(Status(StatusCode.ERROR))
+            
+            return session_id
     
     def end_conversation(self, session_id: str, quality_score = None,
                         user_feedback: Optional[str] = None,
@@ -1137,39 +1132,36 @@ class SecurityWrapper:
     
     # ============ ASYNC WRAPPER METHODS ============
     
-    async def start_conversation_async(self, agent_id: str, user_id: Optional[str] = None,
-                                     metadata: Optional[Dict[str, Any]] = None) -> Optional[str]:
-        """Start conversation with security features (async)"""
+    async def start_conversation_async(self, agent_id: str, metadata: Optional[Dict[str, Any]] = None) -> Optional[str]:
+        """Start a conversation with security checks (async)"""
+        # Add security flags to metadata
+        metadata = metadata or {}
+        metadata['security_flags'] = {
+            'tamper_detected': False,  # Default to False if not available
+            'pii_detected': False,     # Default to False if not available
+            'compliance_violation': False  # Set by compliance wrapper if used
+        }
+        
+        # Scan metadata for PII if available
+        if hasattr(self.security_manager, 'scan_metadata_for_pii'):
+            if self.security_manager.scan_metadata_for_pii(metadata):
+                metadata['security_flags']['pii_detected'] = True
+        
         # Start OTEL span
-        with self.tracer.trace_session_operation(
-            operation="start_conversation_async",
-            agent_id=agent_id,
-            client_id=self.client_id,
-            user_id=user_id
-        ) as span:
-            try:
-                # PII detection on metadata
-                if self.enable_security and self.security_manager:
-                    self.security_manager.scan_for_pii(metadata=metadata)
-                
-                session_id = await self.tracker.start_conversation_async(agent_id, user_id, metadata)
-                
-                # Add session_id to span
-                if session_id and span:
-                    span.set_attribute("session.id", session_id)
-                    span.set_attribute("operation.success", True)
-                
-                if session_id and self.enable_security:
-                    self._track_session_start(session_id, agent_id)
-                
-                return session_id
-                
-            except Exception as e:
-                if span:
-                    span.set_status(Status(StatusCode.ERROR, str(e)))
-                    span.record_exception(e)
-                self.logger.error(f"Error in start_conversation_async: {e}")
-                raise
+        with self.tracer.start_span('start_conversation_async') as span:
+            span.set_attribute('agent_id', agent_id)
+            span.set_attribute('has_metadata', bool(metadata))
+            
+            # Call wrapped tracker
+            session_id = await self.tracker.start_conversation_async(agent_id, metadata)
+            
+            if session_id:
+                span.set_attribute('session_id', session_id)
+                span.set_status(Status(StatusCode.OK))
+            else:
+                span.set_status(Status(StatusCode.ERROR))
+            
+            return session_id
     
     async def end_conversation_async(self, session_id: str, quality_score = None,
                                    user_feedback: Optional[str] = None,

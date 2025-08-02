@@ -67,6 +67,26 @@ class SecureLogger:
             return message % (*args, *kwargs) if args or kwargs else message
         except Exception:
             return message
+    
+    def debug(self, message: str, *args, **kwargs):
+        """Log debug message with masked sensitive data"""
+        formatted = self.format_log(message, *args, **kwargs)
+        logging.debug(formatted)
+    
+    def info(self, message: str, *args, **kwargs):
+        """Log info message with masked sensitive data"""
+        formatted = self.format_log(message, *args, **kwargs)
+        logging.info(formatted)
+    
+    def warning(self, message: str, *args, **kwargs):
+        """Log warning message with masked sensitive data"""
+        formatted = self.format_log(message, *args, **kwargs)
+        logging.warning(formatted)
+    
+    def error(self, message: str, *args, **kwargs):
+        """Log error message with masked sensitive data"""
+        formatted = self.format_log(message, *args, **kwargs)
+        logging.error(formatted)
 
 @dataclass
 class APIConfig:
@@ -466,24 +486,43 @@ class AgentOperationsTracker:
     def __init__(self, 
                  base_url: str,
                  api_key: Optional[str] = None,
+                 client_id: Optional[str] = None,
                  timeout: int = 30,
                  max_retries: int = 3,
                  retry_delay: float = 1.0,
                  enable_async: bool = False,
                  logger: Optional[logging.Logger] = None):
-        """Initialize the Agent Operations Tracker"""
+        """Initialize Agent Operations Tracker
+        
+        Args:
+            base_url: API base URL
+            api_key: API authentication key
+            client_id: Client identifier
+            timeout: Request timeout in seconds
+            max_retries: Maximum number of retries
+            retry_delay: Initial delay between retries
+            enable_async: Enable async support
+            logger: Optional logger instance
+        """
         self.base_url = base_url.rstrip('/')
         self.timeout = timeout
         self.max_retries = max_retries
         self.retry_delay = retry_delay
         self.enable_async = enable_async
         
-        # Setup secure logging
+        # Setup logging
         self.logger = logger or logging.getLogger(__name__)
         self.secure_logger = SecureLogger()
         
-        # Initialize secure API client
-        self.api_client = SecureAPIClient(base_url, api_key)
+        # Initialize API client with config
+        config = APIConfig(
+            base_url=base_url,
+            api_key=api_key,
+            client_id=client_id,
+            timeout=float(timeout),
+            max_retries=max_retries
+        )
+        self.api_client = SecureAPIClient(config=config)
         
         # Log initialization without exposing API key
         self.logger.info(
@@ -600,7 +639,7 @@ class AgentOperationsTracker:
     
     def register_agent(self, agent_id: str, sdk_version: Optional[str] = None, 
                       metadata: Optional[Dict[str, Any]] = None) -> bool:
-        """Register a new agent with the backend"""
+        """Register an agent with the backend"""
         data = asdict(AgentRegistrationData(
             agent_id=agent_id,
             registration_time=datetime.now().isoformat(),
@@ -608,7 +647,7 @@ class AgentOperationsTracker:
             metadata=metadata
         ))
         
-        response = self._make_request('POST', '/agents/register', data)
+        response = self._make_request('POST', '/api/sdk/agents/register', data)
         
         if response.success:
             self.logger.info(f"Agent {agent_id} registered successfully")
@@ -619,7 +658,7 @@ class AgentOperationsTracker:
     
     async def register_agent_async(self, agent_id: str, sdk_version: Optional[str] = None,
                                   metadata: Optional[Dict[str, Any]] = None) -> bool:
-        """Async version of register_agent"""
+        """Register an agent with the backend (async)"""
         data = asdict(AgentRegistrationData(
             agent_id=agent_id,
             registration_time=datetime.now().isoformat(),
@@ -627,7 +666,7 @@ class AgentOperationsTracker:
             metadata=metadata
         ))
         
-        response = await self._make_request_async('POST', '/agents/register', data)
+        response = await self._make_request_async('POST', '/api/sdk/agents/register', data)
         
         if response.success:
             self.logger.info(f"Agent {agent_id} registered successfully")
@@ -639,22 +678,30 @@ class AgentOperationsTracker:
     def update_agent_status(self, agent_id: str, status: Union[AgentStatus, str], 
                            previous_status: Optional[Union[AgentStatus, str]] = None,
                            metadata: Optional[Dict[str, Any]] = None) -> bool:
-        """Update agent status in the backend"""
-        status_value = status.value if isinstance(status, AgentStatus) else status
-        previous_status_value = previous_status.value if isinstance(previous_status, AgentStatus) else previous_status
+        """Update agent status"""
+        # Convert status to string if it's an enum
+        if isinstance(status, AgentStatus):
+            status = status.value
+        if isinstance(previous_status, AgentStatus):
+            previous_status = previous_status.value
+            
+        # Validate status
+        if not AgentStatus.is_valid(status):
+            self.logger.error(f"Invalid status: {status}")
+            return False
         
         data = asdict(AgentStatusData(
             agent_id=agent_id,
-            status=status_value,
+            status=status,
             timestamp=datetime.now().isoformat(),
-            previous_status=previous_status_value,
+            previous_status=previous_status,
             metadata=metadata
         ))
         
-        response = self._make_request('POST', '/agents/status', data)
+        response = self._make_request('POST', '/api/sdk/agents/status', data)
         
         if response.success:
-            self.logger.debug(f"Agent {agent_id} status updated to {status_value}")
+            self.logger.info(f"Agent {agent_id} status updated to {status}")
             return True
         else:
             self.logger.error(f"Failed to update agent {agent_id} status: {response.error}")
@@ -663,68 +710,74 @@ class AgentOperationsTracker:
     async def update_agent_status_async(self, agent_id: str, status: Union[AgentStatus, str],
                                        previous_status: Optional[Union[AgentStatus, str]] = None,
                                        metadata: Optional[Dict[str, Any]] = None) -> bool:
-        """Async version of update_agent_status"""
-        status_value = status.value if isinstance(status, AgentStatus) else status
-        previous_status_value = previous_status.value if isinstance(previous_status, AgentStatus) else previous_status
+        """Update agent status (async)"""
+        # Convert status to string if it's an enum
+        if isinstance(status, AgentStatus):
+            status = status.value
+        if isinstance(previous_status, AgentStatus):
+            previous_status = previous_status.value
+            
+        # Validate status
+        if not AgentStatus.is_valid(status):
+            self.logger.error(f"Invalid status: {status}")
+            return False
         
         data = asdict(AgentStatusData(
             agent_id=agent_id,
-            status=status_value,
+            status=status,
             timestamp=datetime.now().isoformat(),
-            previous_status=previous_status_value,
+            previous_status=previous_status,
             metadata=metadata
         ))
         
-        response = await self._make_request_async('POST', '/agents/status', data)
+        response = await self._make_request_async('POST', '/api/sdk/agents/status', data)
         
         if response.success:
-            self.logger.debug(f"Agent {agent_id} status updated to {status_value}")
+            self.logger.info(f"Agent {agent_id} status updated to {status}")
             return True
         else:
             self.logger.error(f"Failed to update agent {agent_id} status: {response.error}")
             return False
     
     def log_activity(self, agent_id: str, activity_type: str, metadata: Optional[Dict[str, Any]] = None) -> bool:
-        """Log agent activity to the backend"""
+        """Log agent activity"""
         data = asdict(ActivityLogData(
             agent_id=agent_id,
             action=activity_type,
             timestamp=datetime.now().isoformat(),
-            details=metadata or {},
-            duration=None
+            details=metadata or {}
         ))
         
-        response = self._make_request('POST', '/agents/activity', data)
+        response = self._make_request('POST', '/api/sdk/agents/activity', data)
         
         if response.success:
-            self.logger.debug(f"Activity logged for agent {agent_id}: {activity_type}")
+            self.logger.info(f"Activity logged for agent {agent_id}: {activity_type}")
             return True
         else:
             self.logger.error(f"Failed to log activity for agent {agent_id}: {response.error}")
             return False
     
     async def log_activity_async(self, agent_id: str, activity_type: str, metadata: Optional[Dict[str, Any]] = None) -> bool:
-        """Async version of log_activity"""
+        """Log agent activity (async)"""
         data = asdict(ActivityLogData(
             agent_id=agent_id,
             action=activity_type,
             timestamp=datetime.now().isoformat(),
-            details=metadata or {},
-            duration=None
+            details=metadata or {}
         ))
         
-        response = await self._make_request_async('POST', '/agents/activity', data)
+        response = await self._make_request_async('POST', '/api/sdk/agents/activity', data)
         
         if response.success:
-            self.logger.debug(f"Activity logged for agent {agent_id}: {activity_type}")
+            self.logger.info(f"Activity logged for agent {agent_id}: {activity_type}")
             return True
         else:
             self.logger.error(f"Failed to log activity for agent {agent_id}: {response.error}")
             return False
     
     def get_active_agents(self) -> Optional[Dict[str, Any]]:
-        """Get list of currently active agents"""
-        response = self._make_request('GET', '/agents/active')
+        """Get list of active agents"""
+        response = self._make_request('GET', '/api/sdk/agents/active')
         
         if response.success:
             return response.data
@@ -733,8 +786,8 @@ class AgentOperationsTracker:
             return None
     
     async def get_active_agents_async(self) -> Optional[Dict[str, Any]]:
-        """Async version of get_active_agents"""
-        response = await self._make_request_async('GET', '/agents/active')
+        """Get list of active agents (async)"""
+        response = await self._make_request_async('GET', '/api/sdk/agents/active')
         
         if response.success:
             return response.data
@@ -743,8 +796,8 @@ class AgentOperationsTracker:
             return None
     
     def get_agent_status(self, agent_id: str) -> Optional[Dict[str, Any]]:
-        """Get current status of a specific agent"""
-        response = self._make_request('GET', f'/agents/{agent_id}/status')
+        """Get current status of an agent"""
+        response = self._make_request('GET', f'/api/sdk/agents/{agent_id}/status')
         
         if response.success:
             return response.data
@@ -753,8 +806,8 @@ class AgentOperationsTracker:
             return None
     
     async def get_agent_status_async(self, agent_id: str) -> Optional[Dict[str, Any]]:
-        """Async version of get_agent_status"""
-        response = await self._make_request_async('GET', f'/agents/{agent_id}/status')
+        """Get current status of an agent (async)"""
+        response = await self._make_request_async('GET', f'/api/sdk/agents/{agent_id}/status')
         
         if response.success:
             return response.data
@@ -764,12 +817,13 @@ class AgentOperationsTracker:
     
     def get_recent_activity(self, limit: int = 50, agent_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
         """Get recent activity logs"""
-        endpoint = '/agents/activity'
+        endpoint = '/api/sdk/agents/activity'
         if agent_id:
-            endpoint = f'/agents/{agent_id}/activity'
-        
-        params = {'limit': limit}
-        response = self._make_request('GET', f"{endpoint}?limit={limit}")
+            endpoint = f'{endpoint}?agent_id={agent_id}'
+        if limit:
+            endpoint = f'{endpoint}&limit={limit}' if '?' in endpoint else f'{endpoint}?limit={limit}'
+            
+        response = self._make_request('GET', endpoint)
         
         if response.success:
             return response.data
@@ -778,12 +832,14 @@ class AgentOperationsTracker:
             return None
     
     async def get_recent_activity_async(self, limit: int = 50, agent_id: Optional[str] = None) -> Optional[Dict[str, Any]]:
-        """Async version of get_recent_activity"""
-        endpoint = '/agents/activity'
+        """Get recent activity logs (async)"""
+        endpoint = '/api/sdk/agents/activity'
         if agent_id:
-            endpoint = f'/agents/{agent_id}/activity'
-        
-        response = await self._make_request_async('GET', f"{endpoint}?limit={limit}")
+            endpoint = f'{endpoint}?agent_id={agent_id}'
+        if limit:
+            endpoint = f'{endpoint}&limit={limit}' if '?' in endpoint else f'{endpoint}?limit={limit}'
+            
+        response = await self._make_request_async('GET', endpoint)
         
         if response.success:
             return response.data
@@ -792,8 +848,8 @@ class AgentOperationsTracker:
             return None
     
     def get_operations_overview(self) -> Optional[Dict[str, Any]]:
-        """Get operations overview (active agents, status distribution, recent activity summary)"""
-        response = self._make_request('GET', '/operations/overview')
+        """Get system-wide operations overview"""
+        response = self._make_request('GET', '/api/sdk/status')
         
         if response.success:
             return response.data
@@ -802,8 +858,8 @@ class AgentOperationsTracker:
             return None
     
     async def get_operations_overview_async(self) -> Optional[Dict[str, Any]]:
-        """Async version of get_operations_overview"""
-        response = await self._make_request_async('GET', '/operations/overview')
+        """Get system-wide operations overview (async)"""
+        response = await self._make_request_async('GET', '/api/sdk/status')
         
         if response.success:
             return response.data

@@ -108,24 +108,19 @@ class SessionInfo:
 
 @dataclass
 class ConversationStartData:
-    """Data for starting a conversation with hybrid tracking"""
-    agent_id: str
+    """Data for starting a conversation"""
     session_id: str
-    run_id: str
-    user_id: Optional[str] = None
-    start_time: Optional[str] = None
-    context: Optional[Dict[str, Any]] = None  # For session resumption
+    agent_id: str
+    start_time: str
     metadata: Optional[Dict[str, Any]] = None
+    run_id: Optional[str] = None
 
 @dataclass
 class ConversationEndData:
-    """Data for ending a conversation with hybrid tracking"""
-    agent_id: str
+    """Data for ending a conversation"""
     session_id: str
-    run_id: str
-    end_time: Optional[str] = None
-    duration_seconds: Optional[int] = None
-    quality_score: Optional[Union[int, str]] = None
+    end_time: str
+    quality_score: Optional[float] = None
     user_feedback: Optional[str] = None
     message_count: Optional[int] = None
     metadata: Optional[Dict[str, Any]] = None
@@ -150,16 +145,14 @@ class SessionRetrievalQuery:
 
 @dataclass
 class MessageData:
-    """Data for individual message tracking"""
+    """Data for a conversation message"""
     session_id: str
-    agent_id: str
-    message_id: str
-    timestamp: str
-    message_type: str  # "user", "agent", "system"
+    role: str  # "user", "agent", or "system"
     content: str
-    metadata: Optional[Dict[str, Any]] = None
+    timestamp: str
     response_time_ms: Optional[int] = None
     tokens_used: Optional[int] = None
+    metadata: Optional[Dict[str, Any]] = None
     
 @dataclass
 class ConversationHistoryData:
@@ -401,15 +394,15 @@ class AgentPerformanceTracker:
                 try:
                     # Determine endpoint based on event type
                     endpoint_map = {
-                        'start': '/conversations/start',
-                        'end': '/conversations/end',
-                        'failed': '/conversations/failed',
-                        'expired': '/conversations/local-expired',
-                        'resume': '/conversations/resume',
-                        'batch_expired': '/conversations/batch-expired',
-                        'evicted': '/conversations/evicted',
-                        'message': '/conversations/message',
-                        'history': '/conversations/history'
+                        'start': '/api/sdk/conversations/start',
+                        'end': '/api/sdk/conversations/end',
+                        'failed': '/api/sdk/conversations/failed',
+                        'expired': '/api/sdk/conversations/local-expired',
+                        'resume': '/api/sdk/conversations/resume',
+                        'batch_expired': '/api/sdk/conversations/batch-expired',
+                        'evicted': '/api/sdk/conversations/evicted',
+                        'message': '/api/sdk/conversations/message',
+                        'history': '/api/sdk/conversations/history'
                     }
                     
                     endpoint = endpoint_map.get(event.event_type)
@@ -501,13 +494,13 @@ class AgentPerformanceTracker:
                 try:
                     # Determine endpoint based on event type
                     endpoint_map = {
-                        'start': '/conversations/start',
-                        'end': '/conversations/end',
-                        'failed': '/conversations/failed',
-                        'expired': '/conversations/local-expired',
-                        'resume': '/conversations/resume',
-                        'message': '/conversations/message',
-                        'history': '/conversations/history'
+                        'start': '/api/sdk/conversations/start',
+                        'end': '/api/sdk/conversations/end',
+                        'failed': '/api/sdk/conversations/failed',
+                        'expired': '/api/sdk/conversations/local-expired',
+                        'resume': '/api/sdk/conversations/resume',
+                        'message': '/api/sdk/conversations/message',
+                        'history': '/api/sdk/conversations/history'
                     }
                     
                     endpoint = endpoint_map.get(event.event_type)
@@ -995,228 +988,130 @@ class AgentPerformanceTracker:
             text = await response.text()
             return {'raw_response': text}
     
-    def start_conversation(self, agent_id: str, user_id: Optional[str] = None,
-                          metadata: Optional[Dict[str, Any]] = None) -> Optional[str]:
-        """Start tracking a new conversation with custom session ID format"""
-        start_time = datetime.now()
-        session_id = self._generate_session_id(agent_id, start_time)
-        
+    def start_conversation(self, agent_id: str, metadata: Optional[Dict[str, Any]] = None) -> Optional[str]:
+        """Start a new conversation and return session ID"""
+        session_id = str(uuid.uuid4())
         data = asdict(ConversationStartData(
-            agent_id=agent_id,
             session_id=session_id,
-            run_id=session_id, # Use session_id as run_id for new sessions
-            user_id=user_id,
-            start_time=start_time.isoformat(),
+            agent_id=agent_id,
+            start_time=datetime.now().isoformat(),
             metadata=metadata
         ))
         
-        response = self._make_request('POST', '/conversations/start', data)
+        response = self._make_request('POST', '/api/sdk/conversations/start', data)
         
         if response.success:
-            # Cache session info for validation
-            with self._cache_lock:
-                self._add_session_lru(session_id, SessionInfo(
-                    agent_id=agent_id,
-                    start_time=start_time,
-                    run_id=session_id, # Use session_id as run_id for new sessions
-                    user_id=user_id
-                ))
-            
-            self.logger.info(f"Conversation {session_id} started for agent {agent_id}")
+            self.logger.info(f"Conversation started: {session_id}")
             return session_id
         else:
             self.logger.error(f"Failed to start conversation: {response.error}")
             return None
     
-    async def start_conversation_async(self, agent_id: str, user_id: Optional[str] = None,
-                                      metadata: Optional[Dict[str, Any]] = None) -> Optional[str]:
-        """Async version of start_conversation"""
-        start_time = datetime.now()
-        session_id = self._generate_session_id(agent_id, start_time)
-        
+    async def start_conversation_async(self, agent_id: str, metadata: Optional[Dict[str, Any]] = None) -> Optional[str]:
+        """Start a new conversation and return session ID (async)"""
+        session_id = str(uuid.uuid4())
         data = asdict(ConversationStartData(
-            agent_id=agent_id,
             session_id=session_id,
-            run_id=session_id, # Use session_id as run_id for new sessions
-            user_id=user_id,
-            start_time=start_time.isoformat(),
+            agent_id=agent_id,
+            start_time=datetime.now().isoformat(),
             metadata=metadata
         ))
         
-        response = await self._make_request_async('POST', '/conversations/start', data)
+        response = await self._make_request_async('POST', '/api/sdk/conversations/start', data)
         
         if response.success:
-            # Cache session info for validation
-            with self._cache_lock:
-                self._add_session_lru(session_id, SessionInfo(
-                    agent_id=agent_id,
-                    start_time=start_time,
-                    run_id=session_id, # Use session_id as run_id for new sessions
-                    user_id=user_id
-                ))
-            
-            self.logger.info(f"Conversation {session_id} started for agent {agent_id}")
+            self.logger.info(f"Conversation started: {session_id}")
             return session_id
         else:
             self.logger.error(f"Failed to start conversation: {response.error}")
             return None
     
-    def end_conversation(self, session_id: str,
-                        quality_score: Optional[Union[int, ConversationQuality]] = None,
+    def end_conversation(self, session_id: str, quality_score: Optional[float] = None,
                         user_feedback: Optional[str] = None,
                         message_count: Optional[int] = None,
                         metadata: Optional[Dict[str, Any]] = None) -> bool:
-        """End a conversation with hybrid session management and seamless resumption"""
-        # Use hybrid cache/backend fallback to get session info (this is an activity)
-        session_info = self._get_session_with_fallback(session_id, is_activity=True)
-        
-        if session_info:
-            agent_id = session_info.agent_id
-            start_time = session_info.start_time
-            run_id = session_info.run_id
-            
-            # Mark session as ended locally
-            session_info.is_ended = True
-            
-            # Remove from cache as conversation is ending
-            self._remove_session_lru(session_id)
-                    
-            self.logger.info(f"Session {session_id} found and ending (agent: {agent_id})")
-        else:
-            self.logger.warning(f"Session {session_id} not found in cache or backend. Proceeding with fallback parsing.")
-            # Try to extract agent_id from session_id format: agent_id_timestamp_random
-            try:
-                parts = session_id.split('_')
-                if len(parts) >= 2:
-                    agent_id = parts[0]
-                    timestamp = int(parts[1])
-                    start_time = datetime.fromtimestamp(timestamp)
-                    run_id = session_id  # Use session_id as run_id
-                else:
-                    self.logger.error(f"Cannot extract agent_id from session_id format: {session_id}")
-                    return False
-            except (ValueError, IndexError) as e:
-                self.logger.error(f"Cannot parse session_id {session_id}: {e}")
-                return False
-        
-        # Calculate duration
-        end_time = datetime.now()
-        duration_seconds = int((end_time - start_time).total_seconds())
-        
-        # Convert quality score if needed
-        if isinstance(quality_score, int):
-            quality_score = ConversationQuality.from_int_safe(quality_score)
-        
-        quality_value = quality_score.value if quality_score else None
-        
+        """End a conversation with metrics"""
         data = asdict(ConversationEndData(
-            agent_id=agent_id,
             session_id=session_id,
-            run_id=run_id,
-            end_time=end_time.isoformat(),
-            duration_seconds=duration_seconds,
-            quality_score=quality_value,
+            end_time=datetime.now().isoformat(),
+            quality_score=quality_score,
             user_feedback=user_feedback,
             message_count=message_count,
             metadata=metadata
         ))
         
-        # Try to send to backend, queue if offline
-        if self._backend_available:
-            response = self._make_request("POST", "/conversations/end", data)
-            if response.success:
-                self.logger.info(f"Successfully ended conversation {session_id}")
-                return True
-            else:
-                self.logger.warning(f"Failed to end conversation: {response.error}")
-                self._queue_event_offline('end', data)
-                return False
-        else:
-            self.logger.warning("Backend unavailable, queueing end conversation event")
-            self._queue_event_offline('end', data)
-            return True  # Return True since we queued it
-    
-    def record_failed_session(self, 
-                             session_id: Optional[str] = None,
-                             agent_id: Optional[str] = None,
-                             error_message: Optional[str] = None,
-                             failure_reason: Optional[str] = None,
-                             error_details: Optional[Dict[str, Any]] = None,
-                             metadata: Optional[Dict[str, Any]] = None) -> bool:
-        """
-        Record a failed conversation session with hybrid session management
-        
-        Args:
-            session_id: Session ID (if available)
-            agent_id: Agent ID (fallback if session_id not available)
-            error_message: Error message (legacy parameter name)
-            failure_reason: Failure reason (new parameter name)
-            error_details: Additional error details
-            metadata: Additional metadata
-            
-        Returns:
-            bool: True if successful, False otherwise
-        """
-        # Handle parameter flexibility for backward compatibility
-        actual_error_message = failure_reason or error_message or "Unknown error"
-        actual_metadata = metadata or error_details or {}
-        
-        if session_id:
-            # Use hybrid cache/backend fallback to get session info (this is an activity)
-            session_info = self._get_session_with_fallback(session_id, is_activity=True)
-            
-            if session_info:
-                actual_agent_id = session_info.agent_id
-                start_time = session_info.start_time
-                run_id = session_info.run_id
-                
-                # Mark session as ended and remove from cache
-                session_info.is_ended = True
-                self._remove_session_lru(session_id)
-            else:
-                # Session not found, try to extract from session_id format or use fallback
-                actual_agent_id = agent_id or self._extract_agent_id_from_session(session_id)
-                start_time = datetime.now()
-                run_id = "unknown"
-        elif agent_id:
-            # Legacy mode: agent_id provided directly
-            actual_agent_id = agent_id
-            session_id = f"failed_{actual_agent_id}_{int(datetime.now().timestamp())}"
-            start_time = datetime.now()
-            run_id = "legacy"
-        else:
-            self.logger.error("Either session_id or agent_id must be provided")
-            return False
-
-        # Prepare failed session data
-        failed_session_data = {
-            "session_id": session_id,
-            "agent_id": actual_agent_id,
-            "timestamp": datetime.now().isoformat(),
-            "client_id": self.client_id,
-            "failure_reason": actual_error_message,
-            "error_details": actual_metadata,
-            "start_time": start_time.isoformat() if isinstance(start_time, datetime) else start_time,
-            "run_id": run_id
-        }
-        
-        # Send to backend
-        response = self._make_request('POST', '/conversations/failed-session', failed_session_data)
+        response = self._make_request('POST', '/api/sdk/conversations/end', data)
         
         if response.success:
-            self.logger.info(f"Failed session recorded for agent {actual_agent_id}: {actual_error_message}")
-            
-            # Update internal metrics
-            with self._metrics_lock:
-                self._performance_metrics.failed_sessions += 1
-                if actual_agent_id not in self._performance_metrics.agent_failure_counts:
-                    self._performance_metrics.agent_failure_counts[actual_agent_id] = 0
-                self._performance_metrics.agent_failure_counts[actual_agent_id] += 1
-                
+            self.logger.info(f"Conversation {session_id} ended")
             return True
         else:
-            self.logger.error(f"Failed to record failed session: {response.error}")
-            self._queue_event_offline('record_failed_session', failed_session_data)
+            self.logger.error(f"Failed to end conversation {session_id}: {response.error}")
+            return False
+    
+    async def end_conversation_async(self, session_id: str, quality_score: Optional[float] = None,
+                                    user_feedback: Optional[str] = None,
+                                    message_count: Optional[int] = None,
+                                    metadata: Optional[Dict[str, Any]] = None) -> bool:
+        """End a conversation with metrics (async)"""
+        data = asdict(ConversationEndData(
+            session_id=session_id,
+            end_time=datetime.now().isoformat(),
+            quality_score=quality_score,
+            user_feedback=user_feedback,
+            message_count=message_count,
+            metadata=metadata
+        ))
+        
+        response = await self._make_request_async('POST', '/api/sdk/conversations/end', data)
+        
+        if response.success:
+            self.logger.info(f"Conversation {session_id} ended")
+            return True
+        else:
+            self.logger.error(f"Failed to end conversation {session_id}: {response.error}")
+            return False
+    
+    def record_failed_session(self, session_id: str, error_message: str,
+                            error_type: Optional[str] = None,
+                            metadata: Optional[Dict[str, Any]] = None) -> bool:
+        """Record a failed session"""
+        data = asdict(FailedSessionData(
+            session_id=session_id,
+            error_message=error_message,
+            error_type=error_type,
+            timestamp=datetime.now().isoformat(),
+            metadata=metadata
+        ))
+        
+        response = self._make_request('POST', '/api/sdk/conversations/failed', data)
+        
+        if response.success:
+            self.logger.info(f"Failed session recorded: {session_id}")
+            return True
+        else:
+            self.logger.error(f"Failed to record failed session {session_id}: {response.error}")
+            return False
+    
+    async def record_failed_session_async(self, session_id: str, error_message: str,
+                                        error_type: Optional[str] = None,
+                                        metadata: Optional[Dict[str, Any]] = None) -> bool:
+        """Record a failed session (async)"""
+        data = asdict(FailedSessionData(
+            session_id=session_id,
+            error_message=error_message,
+            error_type=error_type,
+            timestamp=datetime.now().isoformat(),
+            metadata=metadata
+        ))
+        
+        response = await self._make_request_async('POST', '/api/sdk/conversations/failed', data)
+        
+        if response.success:
+            self.logger.info(f"Failed session recorded: {session_id}")
+            return True
+        else:
+            self.logger.error(f"Failed to record failed session {session_id}: {response.error}")
             return False
     
     def _extract_agent_id_from_session(self, session_id: str) -> str:
@@ -1919,103 +1814,52 @@ class AgentPerformanceTracker:
                 return session_info
             return None
 
-    def log_message(self, session_id: str, message_type: str, content: str,
+    def log_message(self, session_id: str, role: str, content: str,
                    response_time_ms: Optional[int] = None,
                    tokens_used: Optional[int] = None,
                    metadata: Optional[Dict[str, Any]] = None) -> bool:
-        """
-        Log an individual message within a conversation
-        
-        Args:
-            session_id: The conversation session ID
-            message_type: Type of message ("user", "agent", "system")
-            content: The message content
-            response_time_ms: Response time in milliseconds (for agent messages)
-            tokens_used: Number of tokens used (for LLM messages)
-            metadata: Additional metadata
-            
-        Returns:
-            bool: True if successful, False otherwise
-        """
-        # Get session info to extract agent_id
-        session_info = self._get_session_with_fallback(session_id, is_activity=True)
-        
-        if session_info:
-            agent_id = session_info.agent_id
-        else:
-            # Try to extract agent_id from session_id format
-            agent_id = self._extract_agent_id_from_session(session_id)
-            self.logger.warning(f"Session {session_id} not found, using extracted agent_id: {agent_id}")
-        
-        # Generate unique message ID
-        message_id = f"{session_id}_{message_type}_{int(datetime.now().timestamp()*1000)}"
-        
-        # Prepare message data
-        message_data = asdict(MessageData(
+        """Log a message in a conversation"""
+        data = asdict(MessageData(
             session_id=session_id,
-            agent_id=agent_id,
-            message_id=message_id,
-            timestamp=datetime.now().isoformat(),
-            message_type=message_type,
+            role=role,
             content=content,
-            metadata=metadata,
+            timestamp=datetime.now().isoformat(),
             response_time_ms=response_time_ms,
-            tokens_used=tokens_used
+            tokens_used=tokens_used,
+            metadata=metadata
         ))
         
-        # Send to backend
-        response = self._make_request('POST', '/conversations/message', message_data)
+        response = self._make_request('POST', '/api/sdk/conversations/message', data)
         
         if response.success:
-            self.logger.info(f"Message logged for session {session_id} (type: {message_type})")
+            self.logger.info(f"Message logged for session {session_id}")
             return True
         else:
-            self.logger.error(f"Failed to log message: {response.error}")
-            # Queue for offline replay
-            self._queue_event_offline('message', message_data)
+            self.logger.error(f"Failed to log message for session {session_id}: {response.error}")
             return False
     
-    async def log_message_async(self, session_id: str, message_type: str, content: str,
+    async def log_message_async(self, session_id: str, role: str, content: str,
                                response_time_ms: Optional[int] = None,
                                tokens_used: Optional[int] = None,
                                metadata: Optional[Dict[str, Any]] = None) -> bool:
-        """Async version of log_message"""
-        # Get session info to extract agent_id
-        session_info = await self._get_session_with_fallback_async(session_id, is_activity=True)
-        
-        if session_info:
-            agent_id = session_info.agent_id
-        else:
-            # Try to extract agent_id from session_id format
-            agent_id = self._extract_agent_id_from_session(session_id)
-            self.logger.warning(f"Session {session_id} not found, using extracted agent_id: {agent_id}")
-        
-        # Generate unique message ID
-        message_id = f"{session_id}_{message_type}_{int(datetime.now().timestamp()*1000)}"
-        
-        # Prepare message data
-        message_data = asdict(MessageData(
+        """Log a message in a conversation (async)"""
+        data = asdict(MessageData(
             session_id=session_id,
-            agent_id=agent_id,
-            message_id=message_id,
-            timestamp=datetime.now().isoformat(),
-            message_type=message_type,
+            role=role,
             content=content,
-            metadata=metadata,
+            timestamp=datetime.now().isoformat(),
             response_time_ms=response_time_ms,
-            tokens_used=tokens_used
+            tokens_used=tokens_used,
+            metadata=metadata
         ))
         
-        # Send to backend
-        response = await self._make_request_async('POST', '/conversations/message', message_data)
+        response = await self._make_request_async('POST', '/api/sdk/conversations/message', data)
         
         if response.success:
-            self.logger.info(f"Message logged for session {session_id} (type: {message_type})")
+            self.logger.info(f"Message logged for session {session_id}")
             return True
         else:
-            self.logger.error(f"Failed to log message: {response.error}")
-            # Queue for offline replay
-            self._queue_event_offline('message', message_data)
+            self.logger.error(f"Failed to log message for session {session_id}: {response.error}")
             return False
     
     def update_conversation_history(self, session_id: str, messages: List[Dict[str, Any]],
