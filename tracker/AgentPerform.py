@@ -141,6 +141,32 @@ class SessionRetrievalQuery:
     include_history: bool = False
 
 @dataclass
+class MessageData:
+    """Data for individual message tracking"""
+    session_id: str
+    agent_id: str
+    message_id: str
+    timestamp: str
+    message_type: str  # "user", "agent", "system"
+    content: str
+    metadata: Optional[Dict[str, Any]] = None
+    response_time_ms: Optional[int] = None
+    tokens_used: Optional[int] = None
+    
+@dataclass
+class ConversationHistoryData:
+    """Data for conversation history tracking"""
+    session_id: str
+    agent_id: str
+    messages: List[Dict[str, Any]]
+    conversation_summary: Optional[str] = None
+    total_messages: int = 0
+    total_tokens: int = 0
+    start_time: str = ""
+    last_update: str = ""
+    metadata: Optional[Dict[str, Any]] = None
+
+@dataclass
 class PerformanceMetrics:
     """Performance metrics tracking for agent operations"""
     total_sessions: int = 0
