@@ -1,96 +1,102 @@
-# Agent Operations Tracker
-
-A Python SDK for tracking AI Agent operations and metrics.
+# AI Agent Tracking SDK
 
 ## Installation
 
 ```bash
-pip install AI-HR-Agent
+pip install .
 ```
 
-Or install from source:
+## Configuration
 
+The SDK requires an API key for authentication. You can provide it in two ways:
+
+1. Environment Variable (Recommended):
 ```bash
-git clone https://github.com/AliUraish/AI-Agent-Managment-SDK
-cd AI-HR-Agent
-pip install -e .
+export SDK_API_KEY="your_api_key_here"
+export SDK_CLIENT_ID="your_client_id_here"  # Optional
 ```
+
+2. Programmatic Configuration:
+```python
+from tracker import AgentPerformanceTracker, APIConfig
+
+config = APIConfig(
+    api_key="your_api_key_here",      # Do NOT hardcode in production!
+    client_id="your_client_id_here"    # Optional
+)
+tracker = AgentPerformanceTracker(config=config)
+```
+
+⚠️ **Security Warning**: Never commit API keys or sensitive credentials to source control. Always use environment variables or secure configuration management in production.
 
 ## Usage
 
-First, set your API key as an environment variable:
-
-```bash
-export AGENT_TRACKER_API_KEY="your-api-key-here"
-```
-
-### Basic Usage
-
 ```python
-from tracker import AgentOperationsTracker, AgentStatus, ConversationQuality
+from tracker import AgentPerformanceTracker
 
-# Initialize tracker
-tracker = AgentOperationsTracker(
-    base_url="https://your-backend-api.com",
-    api_key=os.getenv('AGENT_TRACKER_API_KEY')
-)
+# Initialize tracker (will use SDK_API_KEY from environment)
+tracker = AgentPerformanceTracker()
 
-# Register an agent
-tracker.register_agent("agent_001", sdk_version="1.0.0")
+# Start tracking a conversation
+session_id = tracker.start_conversation("agent_123")
 
-# Update agent status
-tracker.update_agent_status("agent_001", AgentStatus.ACTIVE)
-
-# Start a conversation
-session_id = tracker.start_conversation("agent_001", user_id="user_123")
-
-# End conversation with quality score
-tracker.end_conversation(
+# Track messages
+tracker.log_user_message(session_id, "Hello!")
+tracker.log_agent_message(
     session_id=session_id,
-    quality_score=ConversationQuality.GOOD,
-    user_feedback="Very helpful!"
+    content="Hi there!",
+    response_time_ms=150,
+    tokens_used=10
 )
 
-# Get system overview
-overview = tracker.get_system_overview()
-```
-
-### Async Usage
-
-```python
-async with AgentOperationsTracker(
-    base_url="https://your-backend-api.com",
-    api_key=os.getenv('AGENT_TRACKER_API_KEY'),
-    enable_async=True
-) as tracker:
-    await tracker.register_agent_async("agent_002")
-    await tracker.update_agent_status_async("agent_002", AgentStatus.ACTIVE)
+# End conversation
+tracker.end_conversation(session_id, quality_score=4.5)
 ```
 
 ## Features
 
-- Secure API key handling
-- Both synchronous and asynchronous support
-- Comprehensive agent status tracking
-- Conversation quality monitoring
-- Failure tracking and reporting
-- System-wide metrics and overview
-- Secure logging with sensitive data masking
+- Agent operations tracking
+- Performance metrics
+- Message-level tracking
+- Conversation history
+- Security features
+- Compliance tracking
+- LLM usage tracking
 
-## Security
+## Best Practices
 
-- API keys are handled securely
-- Sensitive data is masked in logs
-- Environment variable based configuration
-- Secure session management
+1. API Key Security:
+   - Use environment variables for API keys
+   - Never hardcode sensitive data
+   - Rotate API keys periodically
 
-## Requirements
+2. Rate Limiting:
+   - Respects 5000 requests/minute limit
+   - Automatic retry with exponential backoff
+   - Handles 429 responses gracefully
 
-- Python 3.7+
-- requests
-- aiohttp
-- python-dateutil
+3. Data Validation:
+   - Agent status must be: 'active', 'idle', 'busy', or 'error'
+   - Quality scores: 1.0 to 5.0
+   - Response times in milliseconds (2 decimal places)
+   - All timestamps in milliseconds
+   - JSON-serializable metadata
 
-## License
+4. Error Handling:
+   - Comprehensive error handling
+   - Automatic retries for transient failures
+   - Offline event queuing
+   - Graceful degradation
 
-MIT License 
+## Development
+
+```bash
+# Install development dependencies
+pip install -e ".[dev]"
+
+# Run tests
+pytest
+
+# Check types
+mypy .
+``` 

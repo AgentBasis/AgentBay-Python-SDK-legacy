@@ -4,6 +4,7 @@ import json
 import logging
 import asyncio
 import threading
+import os
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Union
 from dataclasses import dataclass, asdict
@@ -66,13 +67,28 @@ class SecureLogger:
 class APIConfig:
     """API configuration with defaults"""
     base_url: str = "http://localhost:8080/api"
-    api_key: str = "sdk_api_key_2024_permanent_3301f4d913aa2e2a928a3686bdc17e33"
-    client_id: str = "sdk_client_permanent_2024"
+    api_key: Optional[str] = None  # Should be provided via environment variable or secure configuration
+    client_id: Optional[str] = None  # Should be provided during initialization
     max_retries: int = 3
     retry_delay: float = 0.5  # Initial delay in seconds
     max_delay: float = 8.0    # Maximum delay in seconds
     timeout: float = 30.0     # Request timeout in seconds
     rate_limit: int = 5000    # Requests per minute
+    
+    def __post_init__(self):
+        """Initialize API key and client ID from environment if not provided"""
+        if self.api_key is None:
+            self.api_key = os.getenv(ENV_API_KEY)
+        if self.client_id is None:
+            self.client_id = os.getenv(ENV_CLIENT_ID)
+            
+        if self.api_key is None:
+            raise ValueError(
+                f"API key must be provided either through initialization or {ENV_API_KEY} environment variable"
+            )
+        if self.client_id is None:
+            # Generate a unique client ID if not provided
+            self.client_id = f"sdk_client_{uuid.uuid4().hex[:8]}"
 
 class SecureAPIClient:
     """Secure API client with rate limiting and validation"""
