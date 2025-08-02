@@ -15,6 +15,11 @@ from urllib.parse import urljoin
 import re
 
 
+# Environment variable names
+ENV_API_KEY = "SDK_API_KEY"
+ENV_CLIENT_ID = "SDK_CLIENT_ID"
+
+
 @dataclass
 class APIResponse:
     """Standard response structure from backend API"""
