@@ -172,5 +172,5 @@ if _COMPLIANCE_AVAILABLE:
         "create_smart_compliance_tracker"
     ])
 
-# Note: Session tracking is now handled entirely by the backend.
-# The SDK no longer maintains local session state for lighter memory usage. 
+# Note: Session tracking uses a hybrid model.
+# The SDK keeps a lightweight local cache with sliding TTL and relies on backend persistence for resilience. 
