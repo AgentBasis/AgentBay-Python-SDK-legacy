@@ -1091,6 +1091,7 @@ class SecurityWrapper:
                 raise
     
     def record_failed_session(self, session_id: str, error_message: str,
+                             error_type: Optional[str] = None,
                              metadata: Optional[Dict[str, Any]] = None) -> bool:
         """Record failed session with security features and OTEL tracing"""
         # Extract agent_id from session_id for tracing
@@ -1111,7 +1112,7 @@ class SecurityWrapper:
                     self.security_manager.scan_for_pii(text=error_message, metadata=metadata)
                 
                 # Call original method
-                result = self.tracker.record_failed_session(session_id, error_message, metadata)
+                result = self.tracker.record_failed_session(session_id, error_message, error_type=error_type, metadata=metadata)
                 
                 # Update span
                 if span:
