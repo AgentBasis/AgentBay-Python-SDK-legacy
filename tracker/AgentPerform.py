@@ -1,4 +1,5 @@
 import time
+import os
 import uuid
 import json
 import logging
@@ -310,6 +311,15 @@ class AgentPerformanceTracker:
         self._cleanup_stop_event = threading.Event()
         self._cleanup_thread: Optional[threading.Thread] = None
         self._async_cleanup_task: Optional[asyncio.Task] = None
+        
+        # Heartbeat / uptime tracking
+        # Persistable instance identity (may be overridden by env SDK_INSTANCE_ID)
+        self._instance_id: str = os.getenv("SDK_INSTANCE_ID") or f"inst_{uuid.uuid4().hex[:8]}"
+        self._process_start_ts: str = datetime.now().isoformat()
+        self._process_start_monotonic: float = time.monotonic()
+        self._heartbeat_thread: Optional[threading.Thread] = None
+        self._heartbeat_stop_event = threading.Event()
+        self._heartbeat_interval_seconds: int = 30
         
         # Start TTL cleanup daemon thread
         self._start_cleanup_daemon()
@@ -798,6 +808,92 @@ class AgentPerformanceTracker:
             'cleanup_daemon_running': self._cleanup_thread is not None and self._cleanup_thread.is_alive(),
             'async_cleanup_running': self._async_cleanup_task is not None and not self._async_cleanup_task.done()
         }
+
+    # ------------------ Heartbeat / Uptime ------------------
+    def _compute_uptime_ms(self) -> int:
+        """Compute process uptime in milliseconds using monotonic clock."""
+        try:
+            elapsed = time.monotonic() - self._process_start_monotonic
+            return int(elapsed * 1000)
+        except Exception:
+            # Fallback to wall clock if monotonic not available
+            try:
+                started = datetime.fromisoformat(self._process_start_ts)
+                return int((datetime.now() - started).total_seconds() * 1000)
+            except Exception:
+                return 0
+
+    def send_heartbeat(self, agent_id: str, status: str = "active", metadata: Optional[Dict[str, Any]] = None) -> bool:
+        """Send a heartbeat with uptime hints to backend."""
+        payload = {
+            'agent_id': agent_id,
+            'instance_id': self._instance_id,
+            'client_id': self.client_id,
+            'status': status,
+            'timestamp': datetime.now().isoformat(),
+            'process_start_ts': self._process_start_ts,
+            'uptime_ms': self._compute_uptime_ms(),
+            'metadata': metadata or {}
+        }
+        try:
+            resp = self.api_client.make_request('POST', '/api/sdk/agents/heartbeat', payload)
+            if not resp.success:
+                self.logger.warning(f"Heartbeat failed: {resp.error}")
+                return False
+            return True
+        except Exception as e:
+            self.logger.error(f"Heartbeat exception: {e}")
+            return False
+
+    def start_heartbeat(self, agent_id: str, interval_seconds: int = 30,
+                        status_provider: Optional[Any] = None,
+                        metadata_provider: Optional[Any] = None) -> None:
+        """
+        Start periodic heartbeat loop.
+        - status_provider: optional callable returning a status string per tick
+        - metadata_provider: optional callable returning metadata dict per tick
+        """
+        # Avoid duplicate threads
+        if self._heartbeat_thread and self._heartbeat_thread.is_alive():
+            self.logger.info("Heartbeat already running; updating interval if changed")
+            self._heartbeat_interval_seconds = max(5, int(interval_seconds))
+            return
+
+        self._heartbeat_interval_seconds = max(5, int(interval_seconds))
+        self._heartbeat_stop_event.clear()
+
+        def _loop():
+            self.logger.info(f"Heartbeat started (every {self._heartbeat_interval_seconds}s) for agent {agent_id}")
+            next_delay = self._heartbeat_interval_seconds
+            while not self._heartbeat_stop_event.is_set():
+                try:
+                    status = status_provider() if callable(status_provider) else "active"
+                    metadata = metadata_provider() if callable(metadata_provider) else None
+                    ok = self.send_heartbeat(agent_id, status=status, metadata=metadata)
+                    # Reset delay on success
+                    next_delay = self._heartbeat_interval_seconds if ok else min(max(5, next_delay * 2), 300)
+                except Exception as e:
+                    self.logger.error(f"Heartbeat loop error: {e}")
+                    next_delay = min(max(5, next_delay * 2), 300)
+
+                # Wait for next tick or stop
+                stop = self._heartbeat_stop_event.wait(timeout=next_delay)
+                if stop:
+                    break
+            self.logger.info("Heartbeat stopped")
+
+        self._heartbeat_thread = threading.Thread(target=_loop, daemon=True, name="AgentHeartbeat")
+        self._heartbeat_thread.start()
+
+    def stop_heartbeat(self) -> None:
+        """Stop the heartbeat loop if running."""
+        if self._heartbeat_thread and self._heartbeat_thread.is_alive():
+            self._heartbeat_stop_event.set()
+            try:
+                self._heartbeat_thread.join(timeout=5)
+            except Exception:
+                pass
+            self._heartbeat_thread = None
     
     def touch_session(self, session_id: str) -> bool:
         """Touch a session to reset its TTL timer (this IS an activity)"""

@@ -37,6 +37,9 @@ from tracker import AgentPerformanceTracker
 # Initialize tracker (will use SDK_API_KEY from environment)
 tracker = AgentPerformanceTracker()
 
+# Optional: start heartbeats to report uptime hints (backend-authoritative uptime)
+tracker.start_heartbeat(agent_id="agent_123", interval_seconds=30)
+
 # Start tracking a conversation
 session_id = tracker.start_conversation("agent_123")
 
@@ -51,6 +54,9 @@ tracker.log_agent_message(
 
 # End conversation
 tracker.end_conversation(session_id, quality_score=4.5)
+
+# Optional: stop heartbeats when shutting down
+tracker.stop_heartbeat()
 ```
 
 ## Features
