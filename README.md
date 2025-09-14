@@ -1,4 +1,4 @@
-# AI Agent Tracking SDK
+# Python SDK
 
 ## Installation
 
