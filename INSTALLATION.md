@@ -1,6 +1,6 @@
 # Installation Guide
 
-## Standard Installation (Recommended)
+## Standard Installation
 
 Install with all features including OpenTelemetry tracing:
 
