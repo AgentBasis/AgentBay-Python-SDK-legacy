@@ -34,7 +34,7 @@ Quick Start:
 """
 
 # LLM Tracking
-from .Tracker_llm import (
+from .llm_tracking import (
     instrument_openai,
     uninstrument_openai,
     instrument_anthropic, 
@@ -49,7 +49,7 @@ from .Tracker_llm import (
 )
 
 # System Component Tracking
-from .comp_tracker import (
+from .comp_tracking import (
     instrument_system,
     uninstrument_system,
     start_system_monitoring,
@@ -65,7 +65,7 @@ from .comp_tracker import (
 )
 
 # OpenTelemetry initialization
-from .Tracker_llm.otel import init_tracing
+from .llm_tracking.otel import init_tracing
 
 # Version info
 __version__ = "1.0.0"
