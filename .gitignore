@@ -52,39 +52,6 @@ ENV/
 .settings/
 .vs/
 
-# Testing and coverage
-.coverage
-htmlcov/
-.tox/
-.nox/
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-cover/
-test-reports/
-
-# Logs and debugging
-*.log
-logs/
-log/
-debug/
-*.debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# Local development
-*.db
-*.sqlite3
-*.sqlite
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
 
 # Distribution / packaging
 dist/
@@ -101,25 +68,6 @@ build/
 *.sar
 *.class
 
-# Documentation
-docs/_build/
-site/
-doc/build/
-doc/source/_build/
-_build/
-_static/
-_templates/
-
-# Backup files
-*.bak
-*.tmp
-*~
-*.old
-*.orig
-*.rej
-*.swp
-*.swo
-*.swn
 
 # SDK specific
 test_output/
@@ -141,24 +89,3 @@ ehthumbs.db
 Thumbs.db
 Desktop.ini
 $RECYCLE.BIN/
-
-# Jupyter Notebook
-.ipynb_checkpoints
-*/.ipynb_checkpoints/*
-profile_default/
-ipython_config.py
-
-# Node (if using any JS tools)
-node_modules/
-npm-debug.log
-yarn-debug.log
-yarn-error.log
-
-# Temporary files
-tmp/
-temp/
-.temp/
-*.tmp
-*.temp 
-#mdc files
-.mdc
