@@ -8,55 +8,83 @@ pip install .
 
 ## Configuration
 
-The SDK requires an API key for authentication. You can provide it in two ways:
+The SDK uses OpenTelemetry for exporting data. Configuration primarily involves setting up an OTel exporter and tuning the data collection settings.
 
-1. Environment Variable (Recommended):
-```bash
-export SDK_API_KEY="your_api_key_here"
-export SDK_CLIENT_ID="your_client_id_here"  # Optional
-```
+### Telemetry Exporter
 
-2. Programmatic Configuration:
+By default, `quick_setup` uses a console exporter, which is useful for debugging. For production, you'll want to configure an OTLP exporter to send data to an observability backend like AgentBay, Jaeger, or Honeycomb.
+
 ```python
-from tracker import AgentPerformanceTracker, APIConfig
+from agentbay import init_tracing
 
-config = APIConfig(
-    api_key="your_api_key_here",      # Do NOT hardcode in production!
-    client_id="your_client_id_here"    # Optional
-)
-tracker = AgentPerformanceTracker(config=config)
+# Point to your OTLP collector endpoint
+init_tracing(exporter="otlp-http", endpoint="http://your-collector-endpoint:4318/v1/traces")
 ```
 
-⚠️ **Security Warning**: Never commit API keys or sensitive credentials to source control. Always use environment variables or secure configuration management in production.
+### Data Collection
+
+You can configure LLM and system tracking separately.
+
+**LLM Tracking Privacy:**
+
+Control what data is captured from LLM interactions.
+
+```python
+from agentbay import configure_llm_privacy
+
+# Disable capturing prompt/completion content entirely
+configure_llm_privacy(capture_content=False)
+
+# Or, provide a custom redactor function
+def simple_redactor(text: str) -> str:
+    return "[REDACTED]"
+
+configure_llm_privacy(redactor=simple_redactor)
+```
+
+**System Tracking:**
+
+Tune which system components are monitored and their collection intervals.
+
+```python
+from agentbay import configure_system
+
+configure_system(
+    enable_network_monitoring=True,  # Default is False
+    cpu_alert_threshold=75.0,        # Alert when CPU > 75%
+    default_collection_interval=60.0 # Collect metrics every 60 seconds
+)
+```
+
+You can also configure system tracking via environment variables (e.g., `AGENTBAY_ENABLE_NETWORK_MONITORING=true`, `AGENTBAY_COLLECTION_INTERVAL=60`).
 
 ## Usage
 
+The easiest way to get started is with `quick_setup`. This function initializes both LLM and system tracking with sensible defaults.
+
 ```python
-from tracker import AgentPerformanceTracker
+from agentbay import quick_setup
+import openai # or any other supported library
 
-# Initialize tracker (will use SDK_API_KEY from environment)
-tracker = AgentPerformanceTracker()
+# Ensure OPENAI_API_KEY is set in your environment
+# pip install openai
 
-# Optional: start heartbeats to report uptime hints (backend-authoritative uptime)
-tracker.start_heartbeat(agent_id="agent_123", interval_seconds=30)
-
-# Start tracking a conversation
-session_id = tracker.start_conversation("agent_123")
-
-# Track messages
-tracker.log_user_message(session_id, "Hello!")
-tracker.log_agent_message(
-    session_id=session_id,
-    content="Hi there!",
-    response_time_ms=150,
-    tokens_used=10
+# Initialize both LLM and system tracking
+quick_setup(
+    llm_providers=["openai"],
+    system_monitoring=True,
+    collection_interval=30,
+    exporter="console" # Prints telemetry to the console
 )
 
-# End conversation
-tracker.end_conversation(session_id, quality_score=4.5)
-
-# Optional: stop heartbeats when shutting down
-tracker.stop_heartbeat()
+# Now, use your LLM client as usual.
+# The SDK will automatically track usage.
+client = openai.OpenAI()
+response = client.chat.completions.create(
+    model="gpt-4o-mini",
+    messages=[{"role": "user", "content": "Tell me a joke about observability."}]
+)
+print(response.choices[0].message.content)
 ```
 
 ## Features
