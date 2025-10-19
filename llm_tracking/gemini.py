@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 import time
 import inspect
-from typing import Any, Dict, Iterable, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 from wrapt import wrap_function_wrapper
 from opentelemetry.trace import get_tracer, SpanKind, Status, StatusCode
@@ -103,6 +103,102 @@ def _extract_text_from_input(input_data: Any) -> str:
                     parts.append(str(d["text"]))
         return " ".join(parts)
     return ""
+
+
+def _maybe_get(obj: Any, key: str, default: Any = None) -> Any:
+    if obj is None:
+        return default
+    if isinstance(obj, dict):
+        return obj.get(key, default)
+    return getattr(obj, key, default)
+
+
+def _iter_grpc_contents(request_like: Any) -> Iterable[Any]:
+    if request_like is None:
+        return []
+    contents = _maybe_get(request_like, "contents")
+    if contents:
+        return contents
+    prompt = _maybe_get(request_like, "prompt")
+    if prompt:
+        return [prompt]
+    return []
+
+
+def _extract_text_from_grpc_part(part: Any) -> str:
+    if part is None:
+        return ""
+    for attr in ("text", "input_text"):
+        value = _maybe_get(part, attr)
+        if isinstance(value, str):
+            return value
+    try:
+        as_dict = _model_as_dict(part)
+        text = as_dict.get("text") or as_dict.get("input_text")
+        if isinstance(text, str):
+            return text
+    except Exception:
+        pass
+    return ""
+
+
+def _set_prompts_from_grpc_request(span, request_like: Any):
+    contents = list(_iter_grpc_contents(request_like))
+    if not contents:
+        return
+
+    filtered: List[str] = []
+    for content in contents:
+        role = _maybe_get(content, "role")
+        if isinstance(role, str):
+            role_norm = role.lower()
+        elif hasattr(role, "name"):
+            try:
+                role_norm = str(role.name).lower()
+            except Exception:
+                role_norm = "user"
+        elif isinstance(role, int):
+            role_norm = {0: "unspecified", 1: "user", 2: "model"}.get(role, "user")
+        else:
+            role_norm = "user"
+
+        if role_norm not in {"user", "unspecified", ""}:
+            continue
+
+        parts = _maybe_get(content, "parts")
+        text_segments: List[str] = []
+        if isinstance(parts, Iterable) and not isinstance(parts, (str, bytes)):
+            for part in parts:
+                text = _extract_text_from_grpc_part(part)
+                if text:
+                    text_segments.append(text)
+        else:
+            text = _extract_text_from_input(content)
+            if text:
+                text_segments.append(text)
+
+        merged = " ".join(text_segments).strip()
+        if merged:
+            filtered.append(merged)
+
+    if not filtered:
+        return
+
+    try:
+        _safe_set(span, "gen_ai.prompt.count", len(filtered))
+        record_message_count(len(filtered))
+    except Exception:
+        pass
+
+    for idx, text in enumerate(filtered):
+        _safe_set(span, f"{Attr.PROMPT}.{idx}.role", "user")
+        red = maybe_redact(text)
+        if red is not None:
+            _safe_set(span, f"{Attr.PROMPT}.{idx}.content", red)
+            try:
+                record_message_event(role="user", provider="Gemini")
+            except Exception:
+                pass
 
 
 def _set_prompts_from_args_kwargs(span, args, kwargs):
@@ -376,6 +472,87 @@ def _wrap_stream_method(trace_name: str, system_name: str):
     return wrapper
 
 
+def _wrap_grpc_method(trace_name: str, *, streaming: bool = False):
+    def wrapper(wrapped, instance, args, kwargs):
+        request = None
+        if isinstance(kwargs, dict):
+            request = kwargs.get("request")
+        if request is None and args:
+            request = args[0]
+
+        model = None
+        if isinstance(kwargs, dict):
+            model = kwargs.get("model")
+        if model is None:
+            model = _maybe_get(request, "model") or getattr(instance, "model", None)
+
+        attributes = {Attr.SYSTEM: "Gemini"}
+        with TRACER.start_as_current_span(trace_name, kind=SpanKind.CLIENT, attributes=attributes) as span:
+            _safe_set(span, Attr.REQ_MODEL, model)
+            if streaming:
+                _safe_set(span, Attr.REQ_STREAMING, True)
+            _set_prompts_from_grpc_request(span, request or kwargs)
+
+            start_time = time.time()
+            first_token_time: Optional[float] = None
+            chunk_count = 0
+            last_response: Optional[Any] = None
+
+            try:
+                result = wrapped(*args, **kwargs)
+            except Exception as exc:
+                span.set_status(Status(StatusCode.ERROR, str(exc)))
+                span.record_exception(exc)
+                raise
+
+            if not streaming:
+                try:
+                    _set_completion_from_response(span, result)
+                    span.set_status(Status(StatusCode.OK))
+                finally:
+                    pass
+                return result
+
+            def generator():
+                nonlocal first_token_time, chunk_count, last_response
+                try:
+                    for chunk in result:
+                        last_response = chunk
+                        chunk_count += 1
+                        if first_token_time is None:
+                            first_token_time = time.time() - start_time
+                            _safe_set(span, Attr.STREAM_TTFB, first_token_time)
+                        yield chunk
+                except Exception as exc:
+                    span.set_status(Status(StatusCode.ERROR, str(exc)))
+                    span.record_exception(exc)
+                    raise
+                finally:
+                    end_time = time.time()
+                    if first_token_time is not None:
+                        _safe_set(span, Attr.STREAM_TTG, max(end_time - start_time - first_token_time, 0.0))
+                    _safe_set(span, Attr.STREAM_CHUNKS, chunk_count)
+                    try:
+                        record_streaming_metrics(
+                            ttfb=first_token_time,
+                            generate_time=(max(end_time - start_time - first_token_time, 0.0) if first_token_time is not None else None),
+                            chunks=chunk_count,
+                        )
+                    except Exception:
+                        pass
+                    if last_response is not None:
+                        try:
+                            _set_completion_from_response(span, last_response)
+                        except Exception:
+                            pass
+                    span.set_status(Status(StatusCode.OK))
+                    span.end()
+
+            return generator()
+
+    return wrapper
+
+
 def instrument_gemini() -> None:
     """Instrument Gemini via both google.genai (new) and google.generativeai (classic) SDKs."""
     # New google.genai models surface
@@ -432,6 +609,44 @@ def instrument_gemini() -> None:
     except Exception:
         pass
 
+    # gRPC client (google.ai.generativelanguage_v1beta)
+    try:
+        wrap_function_wrapper(
+            "google.ai.generativelanguage_v1beta.services.generative_service.client",
+            "GenerativeServiceClient.generate_content",
+            _wrap_grpc_method("gemini.grpc.generate_content"),
+        )
+        wrap_function_wrapper(
+            "google.ai.generativelanguage_v1beta.services.generative_service.client",
+            "GenerativeServiceClient.stream_generate_content",
+            _wrap_grpc_method("gemini.grpc.stream_generate_content", streaming=True),
+        )
+        wrap_function_wrapper(
+            "google.ai.generativelanguage_v1beta.services.generative_service.client",
+            "GenerativeServiceClient.count_tokens",
+            _wrap_grpc_method("gemini.grpc.count_tokens"),
+        )
+    except Exception:
+        pass
+    try:
+        wrap_function_wrapper(
+            "google.ai.generativelanguage_v1beta.services.generative_service.client",
+            "GenerativeServiceAsyncClient.generate_content",
+            _wrap_grpc_method("gemini.grpc.generate_content"),
+        )
+        wrap_function_wrapper(
+            "google.ai.generativelanguage_v1beta.services.generative_service.client",
+            "GenerativeServiceAsyncClient.stream_generate_content",
+            _wrap_grpc_method("gemini.grpc.stream_generate_content", streaming=True),
+        )
+        wrap_function_wrapper(
+            "google.ai.generativelanguage_v1beta.services.generative_service.client",
+            "GenerativeServiceAsyncClient.count_tokens",
+            _wrap_grpc_method("gemini.grpc.count_tokens"),
+        )
+    except Exception:
+        pass
+
 
 def uninstrument_gemini() -> None:
     """Cleanly unwrap Gemini methods across both SDKs."""
@@ -447,6 +662,12 @@ def uninstrument_gemini() -> None:
         ("google.generativeai", "ChatSession.send_message"),
         ("google.generativeai", "ChatSession.send_message_stream"),
         ("google.generativeai", "embed_content"),
+        ("google.ai.generativelanguage_v1beta.services.generative_service.client", "GenerativeServiceClient.generate_content"),
+        ("google.ai.generativelanguage_v1beta.services.generative_service.client", "GenerativeServiceClient.stream_generate_content"),
+        ("google.ai.generativelanguage_v1beta.services.generative_service.client", "GenerativeServiceClient.count_tokens"),
+        ("google.ai.generativelanguage_v1beta.services.generative_service.client", "GenerativeServiceAsyncClient.generate_content"),
+        ("google.ai.generativelanguage_v1beta.services.generative_service.client", "GenerativeServiceAsyncClient.stream_generate_content"),
+        ("google.ai.generativelanguage_v1beta.services.generative_service.client", "GenerativeServiceAsyncClient.count_tokens"),
     ]
     for mod, meth in targets:
         try:
