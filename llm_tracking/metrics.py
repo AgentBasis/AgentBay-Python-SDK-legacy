@@ -26,12 +26,14 @@ _message_counter = None
 _tool_call_counter = None
 _tool_call_event_counter = None
 _message_event_counter = None
+_memory_count_hist = None
 
 
 def _init():
     global _initialized, _token_counter, _ttfb_hist, _gen_hist, _chunk_counter
     global _choice_counter, _embed_size_hist, _embed_exc_counter, _image_exc_counter
     global _message_counter, _tool_call_counter, _tool_call_event_counter, _message_event_counter
+    global _memory_count_hist
     if _initialized:
         return
     if get_meter is None:
@@ -51,6 +53,7 @@ def _init():
         _tool_call_counter = meter.create_counter("gen_ai.client.tool_calls", unit="tool")
         _tool_call_event_counter = meter.create_counter("gen_ai.client.tool_call.events", unit="event")
         _message_event_counter = meter.create_counter("gen_ai.client.message.events", unit="event")
+        _memory_count_hist = meter.create_histogram("gen_ai.memory.count", unit="memory")
     except Exception:
         pass
     _initialized = True
@@ -161,5 +164,14 @@ def record_message_event(*, role: Optional[str] = None, provider: Optional[str] 
                 _message_event_counter.add(1, attributes=attrs)  # type: ignore
             except Exception:
                 _message_event_counter.add(1)
+    except Exception:
+        pass
+
+
+def record_memory_count(count: Optional[int]):
+    _init()
+    try:
+        if _memory_count_hist and isinstance(count, int) and count > 0:
+            _memory_count_hist.record(count)
     except Exception:
         pass
