@@ -209,29 +209,29 @@ def _extract_llm_attributes(llm_request_dict: dict, llm_response: Any) -> dict:
 	return attributes
 
 
-def _patch(module_name: str, object_name: str, method_name: str, wrapper_function, agentbay_tracer):
+def _patch(module_name: str, object_name: str, method_name: str, wrapper_function, bay_frameworks_tracer):
 	try:
 		module = __import__(module_name, fromlist=[object_name])
 		obj = getattr(module, object_name)
-		wrapt.wrap_function_wrapper(obj, method_name, wrapper_function(agentbay_tracer))
+		wrapt.wrap_function_wrapper(obj, method_name, wrapper_function(bay_frameworks_tracer))
 		_wrapped_methods.append((obj, method_name))
 		logger.debug(f"Successfully wrapped {module_name}.{object_name}.{method_name}")
 	except Exception as e:
 		logger.warning(f"Could not wrap {module_name}.{object_name}.{method_name}: {e}")
 
 
-def _patch_module_function(module_name: str, function_name: str, wrapper_function, agentbay_tracer):
+def _patch_module_function(module_name: str, function_name: str, wrapper_function, bay_frameworks_tracer):
 	try:
 		module = __import__(module_name, fromlist=[function_name])
-		wrapt.wrap_function_wrapper(module, function_name, wrapper_function(agentbay_tracer))
+		wrapt.wrap_function_wrapper(module, function_name, wrapper_function(bay_frameworks_tracer))
 		_wrapped_methods.append((module, function_name))
 		logger.debug(f"Successfully wrapped {module_name}.{function_name}")
 	except Exception as e:
 		logger.warning(f"Could not wrap {module_name}.{function_name}: {e}")
 
 
-def patch_adk(agentbay_tracer):
-	logger.debug("Applying Google ADK patches for agentbay instrumentation")
+def patch_adk(bay_frameworks_tracer):
+	logger.debug("Applying Google ADK patches for bay_frameworks instrumentation")
 	noop_tracer = NoOpTracer()
 	try:
 		import google.adk.telemetry as adk_telemetry
@@ -255,14 +255,14 @@ def patch_adk(agentbay_tracer):
 					logger.debug(f"Replaced tracer in {module_name}")
 			except Exception as e:
 				logger.warning(f"Failed to replace tracer in {module_name}: {e}")
-		_patch("google.adk.agents.base_agent", "BaseAgent", "run_async", _base_agent_run_async_wrapper, agentbay_tracer)
-		_patch_module_function("google.adk.telemetry", "trace_tool_call", _adk_trace_tool_call_wrapper, agentbay_tracer)
-		_patch_module_function("google.adk.telemetry", "trace_tool_response", _adk_trace_tool_response_wrapper, agentbay_tracer)
-		_patch_module_function("google.adk.telemetry", "trace_call_llm", _adk_trace_call_llm_wrapper, agentbay_tracer)
-		_patch_module_function("google.adk.telemetry", "trace_send_data", _adk_trace_send_data_wrapper, agentbay_tracer)
-		_patch("google.adk.flows.llm_flows.base_llm_flow", "BaseLlmFlow", "_call_llm_async", _base_llm_flow_call_llm_async_wrapper, agentbay_tracer)
-		_patch("google.adk.flows.llm_flows.base_llm_flow", "BaseLlmFlow", "_finalize_model_response_event", _finalize_model_response_event_wrapper, agentbay_tracer)
-		_patch_module_function("google.adk.flows.llm_flows.functions", "__call_tool_async", _call_tool_async_wrapper, agentbay_tracer)
+		_patch("google.adk.agents.base_agent", "BaseAgent", "run_async", _base_agent_run_async_wrapper, bay_frameworks_tracer)
+		_patch_module_function("google.adk.telemetry", "trace_tool_call", _adk_trace_tool_call_wrapper, bay_frameworks_tracer)
+		_patch_module_function("google.adk.telemetry", "trace_tool_response", _adk_trace_tool_response_wrapper, bay_frameworks_tracer)
+		_patch_module_function("google.adk.telemetry", "trace_call_llm", _adk_trace_call_llm_wrapper, bay_frameworks_tracer)
+		_patch_module_function("google.adk.telemetry", "trace_send_data", _adk_trace_send_data_wrapper, bay_frameworks_tracer)
+		_patch("google.adk.flows.llm_flows.base_llm_flow", "BaseLlmFlow", "_call_llm_async", _base_llm_flow_call_llm_async_wrapper, bay_frameworks_tracer)
+		_patch("google.adk.flows.llm_flows.base_llm_flow", "BaseLlmFlow", "_finalize_model_response_event", _finalize_model_response_event_wrapper, bay_frameworks_tracer)
+		_patch_module_function("google.adk.flows.llm_flows.functions", "__call_tool_async", _call_tool_async_wrapper, bay_frameworks_tracer)
 	logger.info("Google ADK patching complete")
 
 
@@ -285,4 +285,3 @@ def unpatch_adk():
 			logger.warning(f"Failed to unwrap {obj}.{method_name}: {e}")
 	_wrapped_methods.clear()
 	logger.info("Google ADK unpatching complete")
-
