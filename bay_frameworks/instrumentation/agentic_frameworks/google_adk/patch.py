@@ -1,7 +1,6 @@
 import json
 import wrapt
 from typing import Any
-from opentelemetry import trace as opentelemetry_api_trace
 from opentelemetry.trace import SpanKind as SpanKind
 
 from MYSDK.bay_frameworks.logging import logger
@@ -52,6 +51,25 @@ class NoOpTracer:
 
 	def use_span(self, *args, **kwargs):
 		return NoOpSpan()
+
+
+# Minimal wrapper factories used by patch helpers below
+def _make_wrapper(span_name: str, span_kind: SpanKind = SpanKind.INTERNAL):
+	def factory(tracer):
+		def _wrapper(wrapped, instance, args, kwargs):
+			with tracer.start_as_current_span(span_name, kind=span_kind):
+				return wrapped(*args, **kwargs)
+		return _wrapper
+	return factory
+
+_base_agent_run_async_wrapper = _make_wrapper("adk.base_agent.run_async")
+_adk_trace_tool_call_wrapper = _make_wrapper("adk.telemetry.trace_tool_call", SpanKind.CLIENT)
+_adk_trace_tool_response_wrapper = _make_wrapper("adk.telemetry.trace_tool_response")
+_adk_trace_call_llm_wrapper = _make_wrapper("adk.telemetry.trace_call_llm", SpanKind.CLIENT)
+_adk_trace_send_data_wrapper = _make_wrapper("adk.telemetry.trace_send_data")
+_base_llm_flow_call_llm_async_wrapper = _make_wrapper("adk.llm_flow._call_llm_async", SpanKind.CLIENT)
+_finalize_model_response_event_wrapper = _make_wrapper("adk.llm_flow._finalize_model_response_event")
+_call_tool_async_wrapper = _make_wrapper("adk.llm_flow.__call_tool_async", SpanKind.CLIENT)
 
 
 def _build_llm_request_for_trace(llm_request) -> dict:
