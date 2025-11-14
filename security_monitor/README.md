@@ -35,7 +35,7 @@ The Security Monitor is a comprehensive security monitoring solution for AI agen
 ### Basic Setup
 
 ```python
-from MYSDK.security_monitor import SecurityMonitor, ContextAwareMonitor
+from agentbay.security_monitor import SecurityMonitor, ContextAwareMonitor
 
 # Initialize security monitor
 monitor = SecurityMonitor(
@@ -64,10 +64,10 @@ monitor.track_interaction(
 )
 ```
 
-### Comprehensive Setup with MYSDK Integration
+### Comprehensive Setup with agentbay Integration
 
 ```python
-from MYSDK import quick_setup_comprehensive
+from agentbay import quick_setup_comprehensive
 
 # Initialize comprehensive monitoring
 result = quick_setup_comprehensive(
@@ -85,7 +85,7 @@ security_monitor = result['security_monitor']
 ### Quick Security Setup
 
 ```python
-from MYSDK.security_monitor import quick_setup_security
+from agentbay.security_monitor import quick_setup_security
 
 # Quick setup with defaults
 monitor = quick_setup_security(
@@ -103,7 +103,7 @@ The context-aware monitoring system tracks conversation patterns and identifies 
 ### Conversation Context Tracking
 
 ```python
-from MYSDK.security_monitor import ContextAwareMonitor
+from agentbay.security_monitor import ContextAwareMonitor
 
 context_monitor = ContextAwareMonitor(
     max_contexts=1000,
@@ -147,8 +147,8 @@ print(f"Manipulation Indicators: {context.manipulation_indicators}")
 ### Compliance Monitoring
 
 ```python
-from MYSDK.security_monitor import ComplianceMonitor
-from MYSDK.security_monitor.compliance import ComplianceFramework
+from agentbay.security_monitor import ComplianceMonitor
+from agentbay.security_monitor.compliance import ComplianceFramework
 
 compliance_monitor = ComplianceMonitor(
     frameworks=[ComplianceFramework.GDPR, ComplianceFramework.CCPA],
@@ -202,7 +202,7 @@ report.save_to_file("gdpr_compliance_report.json")
 ### Risk Assessment
 
 ```python
-from MYSDK.security_monitor import RiskAssessment
+from agentbay.security_monitor import RiskAssessment
 
 risk_analyzer = RiskAssessment()
 
@@ -218,7 +218,7 @@ print(f"Recommendations: {analysis.recommendations}")
 ### Content Analysis
 
 ```python
-from MYSDK.security_monitor import ContentAnalyzer
+from agentbay.security_monitor import ContentAnalyzer
 
 content_analyzer = ContentAnalyzer(privacy_mode=False)
 
@@ -233,7 +233,7 @@ print(f"Malicious Content: {'malicious_content' in analysis.findings}")
 ### Behavioral Analysis
 
 ```python
-from MYSDK.security_monitor import BehaviorAnalyzer
+from agentbay.security_monitor import BehaviorAnalyzer
 
 behavior_analyzer = BehaviorAnalyzer(pattern_window=50)
 
@@ -250,8 +250,8 @@ print(f"Pattern Recognition: {'repetitive_pattern' in analysis.findings}")
 ### Security Reports
 
 ```python
-from MYSDK.security_monitor import SecurityReporter
-from MYSDK.security_monitor.reporting import ReportFormat
+from agentbay.security_monitor import SecurityReporter
+from agentbay.security_monitor.reporting import ReportFormat
 
 reporter = SecurityReporter(
     output_directory="./security_reports",
@@ -274,7 +274,7 @@ threat_report = reporter.generate_threat_analysis(
 ### Audit Logging
 
 ```python
-from MYSDK.security_monitor import AuditLogger
+from agentbay.security_monitor import AuditLogger
 
 audit_logger = AuditLogger(
     log_directory="./audit_logs",
@@ -390,7 +390,7 @@ The system provides metrics in formats compatible with:
 ### Custom Detectors
 
 ```python
-from MYSDK.security_monitor.detectors import SecurityDetector, DetectionResult
+from agentbay.security_monitor.detectors import SecurityDetector, DetectionResult
 
 class CustomThreatDetector(SecurityDetector):
     def __init__(self):
@@ -464,11 +464,11 @@ monitor.add_exporter(siem_exporter)
 
 ```bash
 # Run the comprehensive example
-python MYSDK/security_monitor_example.py
+python agentbay/security_monitor_example.py
 
 # Test specific components
 python -c "
-from MYSDK.security_monitor import SecurityMonitor
+from agentbay.security_monitor import SecurityMonitor
 monitor = SecurityMonitor()
 monitor.start_monitoring()
 print('Security monitoring test successful!')
@@ -480,7 +480,7 @@ monitor.stop_monitoring()
 
 ```python
 # Validate monitoring functionality
-from MYSDK.security_monitor import SecurityMonitor
+from agentbay.security_monitor import SecurityMonitor
 
 monitor = SecurityMonitor()
 monitor.start_monitoring()
@@ -502,11 +502,11 @@ monitor.stop_monitoring()
 
 ## 🤝 Integration Examples
 
-### With Existing MYSDK Features
+### With Existing agentbay Features
 
 ```python
 # Comprehensive integration
-from MYSDK import quick_setup_comprehensive
+from agentbay import quick_setup_comprehensive
 
 # This automatically integrates:
 # - LLM tracking
@@ -524,13 +524,13 @@ result = quick_setup_comprehensive(
 
 ```python
 # Prometheus metrics export
-from MYSDK.security_monitor.exporters import PrometheusExporter
+from agentbay.security_monitor.exporters import PrometheusExporter
 
 prometheus_exporter = PrometheusExporter(port=8080)
 monitor.add_exporter(prometheus_exporter)
 
 # Elasticsearch integration
-from MYSDK.security_monitor.exporters import ElasticsearchExporter
+from agentbay.security_monitor.exporters import ElasticsearchExporter
 
 es_exporter = ElasticsearchExporter(
     host="localhost",

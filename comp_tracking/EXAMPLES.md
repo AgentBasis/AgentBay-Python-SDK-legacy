@@ -5,7 +5,7 @@ This document provides examples of how to use the AgentBay System Component Trac
 ## Quick Start
 
 ```python
-from MYSDK.comp_tracker import quick_start, get_system_summary
+from agentbay.comp_tracking import quick_start, get_system_summary
 
 # Start monitoring with default settings (30-second intervals)
 quick_start()
@@ -18,7 +18,7 @@ print(f"CPU: {summary['cpu_usage_percent']}%, Memory: {summary['memory_usage_per
 ## Basic System Monitoring
 
 ```python
-from MYSDK.comp_tracker import instrument_system, start_system_monitoring
+from agentbay.comp_tracking import instrument_system, start_system_monitoring
 
 # Initialize system tracking
 instrument_system()
@@ -32,7 +32,7 @@ start_system_monitoring(interval=60.0)
 ## Configuration Options
 
 ```python
-from MYSDK.comp_tracker import configure, instrument_system, start_system_monitoring
+from agentbay.comp_tracking import configure, instrument_system, start_system_monitoring
 
 # Configure monitoring settings
 configure(
@@ -54,7 +54,7 @@ start_system_monitoring()
 ## Privacy Mode
 
 ```python
-from MYSDK.comp_tracker import configure, quick_start
+from agentbay.comp_tracking import configure, quick_start
 
 # Enable privacy mode for minimal data collection
 configure(
@@ -70,7 +70,7 @@ quick_start()
 ## Manual System Information Collection
 
 ```python
-from MYSDK.comp_tracker import (
+from agentbay.comp_tracking import (
     get_system_info, 
     get_cpu_details, 
     get_ram_details,
@@ -100,7 +100,7 @@ print("System Health:", health)
 ## One-time Metrics Recording
 
 ```python
-from MYSDK.comp_tracker import (
+from agentbay.comp_tracking import (
     record_system_snapshot,
     record_cpu_usage,
     record_memory_usage,
@@ -119,7 +119,7 @@ record_disk_usage()
 ## Custom System Operation Tracing
 
 ```python
-from MYSDK.comp_tracker import trace_system_operation, record_system_event
+from agentbay.comp_tracking import trace_system_operation, record_system_event
 
 # Trace a system operation
 with trace_system_operation("backup_operation", backup_type="full") as span:
@@ -142,7 +142,7 @@ from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExport
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
-from MYSDK.comp_tracker import instrument_system, start_system_monitoring
+from agentbay.comp_tracking import instrument_system, start_system_monitoring
 
 # Setup OpenTelemetry
 trace.set_tracer_provider(TracerProvider())
@@ -171,7 +171,7 @@ export AGENTBAY_PRIVACY_MODE=false
 ```
 
 ```python
-from MYSDK.comp_tracker import configure_from_env, instrument_system, start_system_monitoring
+from agentbay.comp_tracking import configure_from_env, instrument_system, start_system_monitoring
 
 # Configuration will be loaded from environment variables
 configure_from_env()
@@ -182,7 +182,7 @@ start_system_monitoring()
 ## Advanced Usage - Custom Metrics Recorder
 
 ```python
-from MYSDK.comp_tracker import SystemMetricsRecorder, PeriodicMetricsCollector
+from agentbay.comp_tracking import SystemMetricsRecorder, PeriodicMetricsCollector
 
 # Create custom metrics recorder
 recorder = SystemMetricsRecorder(meter_name="my_app.system")
@@ -203,7 +203,7 @@ collector.stop()
 
 ```python
 import time
-from MYSDK.comp_tracker import check_system_health, record_system_event
+from agentbay.comp_tracking import check_system_health, record_system_event
 
 def monitor_system_health():
     while True:
@@ -226,8 +226,8 @@ monitor_system_health()
 ## Integration with Existing LLM Tracking
 
 ```python
-from MYSDK.Tracker_llm import instrument_openai
-from MYSDK.comp_tracker import instrument_system, start_system_monitoring
+from agentbay import instrument_openai
+from agentbay.comp_tracking import instrument_system, start_system_monitoring
 
 # Initialize both LLM and system tracking
 instrument_openai()
@@ -248,7 +248,7 @@ response = client.chat.completions.create(
 ## Cleanup and Shutdown
 
 ```python
-from MYSDK.comp_tracker import stop_system_monitoring, uninstrument_system
+from agentbay.comp_tracking import stop_system_monitoring, uninstrument_system
 
 # Stop monitoring
 stop_system_monitoring()
@@ -261,7 +261,7 @@ uninstrument_system()
 
 ```python
 from flask import Flask
-from MYSDK.comp_tracker import (
+from agentbay.comp_tracking import (
     configure, 
     instrument_system, 
     start_system_monitoring,
@@ -321,7 +321,7 @@ if __name__ == '__main__':
 
 ```python
 import logging
-from MYSDK.comp_tracker.config import logger
+from agentbay.comp_tracking.config import logger
 
 # Enable debug logging
 logger.setLevel(logging.DEBUG)

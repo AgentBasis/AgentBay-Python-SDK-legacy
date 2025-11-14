@@ -13,7 +13,7 @@ Frameworks are optional and only instrumented if installed: `langgraph`, `crewai
 ## Quick start
 
 ```python
-import MYSDK.bay_frameworks.instrumentation as bay
+import agentbay.bay_frameworks.instrumentation as bay
 
 bay.instrument_all()  # enable import hook
 
@@ -24,7 +24,7 @@ from langgraph.graph import StateGraph
 
 ## Skipped namespaces
 
-The import hook skips `MYSDK.Tracker_llm` and provider SDKs like `openai`, `anthropic`, `google.generativeai`, `ibm_watsonx_ai`, etc., to avoid collisions.
+The import hook skips `agentbay.llm_tracking` and provider SDKs like `openai`, `anthropic`, `google.generativeai`, `ibm_watsonx_ai`, etc., to avoid collisions.
 
 ## Uninstrument
 
