@@ -10,7 +10,7 @@ Tracks (read-only):
 Does NOT record control parameters (temperature, top_p, max_tokens, penalties).
 
 Usage:
-    from MYSDK import instrument_anthropic
+    from agentbay import instrument_anthropic
     instrument_anthropic()
 """
 

@@ -1,7 +1,7 @@
 """Bay Frameworks instrumentation namespace.
 
 This package provides monitoring-only instrumentation for agentic frameworks.
-Import `MYSDK.bay_frameworks.instrumentation` and call `instrument_all()` to
+Import `agentbay.bay_frameworks.instrumentation` and call `instrument_all()` to
 enable auto-instrumentation of supported agentic frameworks.
 """
 

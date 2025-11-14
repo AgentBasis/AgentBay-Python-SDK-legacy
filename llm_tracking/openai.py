@@ -10,7 +10,7 @@ Tracks (read-only):
 Does NOT record control parameters (temperature, top_p, max_tokens, penalties).
 
 Usage:
-    from MYSDK import instrument_openai
+    from agentbay import instrument_openai
     instrument_openai()
 """
 

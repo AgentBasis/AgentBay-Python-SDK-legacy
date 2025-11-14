@@ -1,4 +1,4 @@
-"""Global privacy/config settings for MYSDK.
+"""Global privacy/config settings for agentbay.
 
 Use `configure` to set:
 - capture_content: bool (default True) — whether to record raw prompt/completion content

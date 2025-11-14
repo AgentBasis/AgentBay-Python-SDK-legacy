@@ -23,7 +23,7 @@ Features:
 - Privacy-first design with configurable data collection
 
 Quick Start:
-    from MYSDK.security_monitor import SecurityMonitor
+    from agentbay.security_monitor import SecurityMonitor
     
     # Initialize security monitoring
     monitor = SecurityMonitor()

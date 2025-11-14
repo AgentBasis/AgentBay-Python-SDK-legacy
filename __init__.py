@@ -23,7 +23,7 @@ Features:
 - Compatible with existing observability stacks
 
 Quick Start:
-    from MYSDK import quick_setup
+    from agentbay import quick_setup
     
     # Initialize both LLM and system tracking
     quick_setup(

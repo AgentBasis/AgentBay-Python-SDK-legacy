@@ -1,7 +1,7 @@
 """Manual API for tracking custom/unsupported LLMs.
 
 Example:
-    from MYSDK.manual import start_llm_span
+    from agentbay.llm_tracking.manual import start_llm_span
     span = start_llm_span(system="custom", model="my-llm")
     span.add_prompt(role="user", content="Hello")
     # call your LLM...

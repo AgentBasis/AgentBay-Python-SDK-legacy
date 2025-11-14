@@ -12,7 +12,7 @@ Does NOT record control parameters (temperature, top_p, max_tokens, penalties).
 Auto-detects Grok when base_url contains 'api.x.ai', with manual override support.
 
 Usage:
-    from MYSDK.Tracker-llm import instrument_grok
+    from agentbay import instrument_grok
     instrument_grok()
 """
 

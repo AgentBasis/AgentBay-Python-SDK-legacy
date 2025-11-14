@@ -18,13 +18,13 @@ Features:
 
 Usage:
     # Basic system monitoring
-    from MYSDK.comp_tracker import instrument_system, start_system_monitoring
+    from agentbay.comp_tracking import instrument_system, start_system_monitoring
     
     instrument_system()
     start_system_monitoring(interval=30)  # Collect every 30 seconds
     
     # Configure monitoring options
-    from MYSDK.comp_tracker import configure
+    from agentbay.comp_tracking import configure
     
     configure(
         enable_network_monitoring=True,
@@ -33,13 +33,13 @@ Usage:
     )
     
     # Get system information
-    from MYSDK.comp_tracker import get_system_info, check_system_health
+    from agentbay.comp_tracking import get_system_info, check_system_health
     
     system_info = get_system_info(detailed=True)
     health_status = check_system_health()
     
     # Manual metrics recording
-    from MYSDK.comp_tracker import record_system_snapshot
+    from agentbay.comp_tracking import record_system_snapshot
     
     record_system_snapshot()  # One-time collection
 """
