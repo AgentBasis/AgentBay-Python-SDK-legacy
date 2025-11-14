@@ -7,7 +7,7 @@ from opentelemetry.trace import SpanKind, get_current_span
 from opentelemetry.metrics import Meter
 from opentelemetry.instrumentation.utils import unwrap
 
-from MYSDK.bay_frameworks.instrumentation.common import (
+from agentbay.bay_frameworks.instrumentation.common import (
 	CommonInstrumentor,
 	InstrumentorConfig,
 	StandardMetrics,
@@ -18,8 +18,8 @@ from MYSDK.bay_frameworks.instrumentation.common import (
 	set_token_usage_attributes,
 	TokenUsageExtractor,
 )
-from MYSDK.bay_frameworks.semconv import SpanAttributes, AgentOpsSpanKindValues, ToolAttributes, MessageAttributes
-from MYSDK.bay_frameworks.semconv.core import CoreAttributes
+from agentbay.bay_frameworks.semconv import SpanAttributes, AgentOpsSpanKindValues, ToolAttributes, MessageAttributes
+from agentbay.bay_frameworks.semconv.core import CoreAttributes
 
 
 logger = logging.getLogger(__name__)
@@ -123,7 +123,7 @@ class CrewaiInstrumentor(CommonInstrumentor):
 def wrap_kickoff_impl(tracer, metrics, attr_manager, wrapped, instance, args, kwargs):
 	attributes = {SpanAttributes.LLM_SYSTEM: "crewai"}
 	span_name = "crewai.workflow"
-	from MYSDK.bay_frameworks.semconv.core import CoreAttributes
+	from agentbay.bay_frameworks.semconv.core import CoreAttributes
 	with create_span(tracer, span_name, kind=SpanKind.INTERNAL, attributes=attributes, attribute_manager=attr_manager) as span:
 		result = wrapped(*args, **kwargs)
 		return result

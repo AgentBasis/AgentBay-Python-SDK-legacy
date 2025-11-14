@@ -2,7 +2,7 @@ from typing import Any, Dict
 from opentelemetry.trace import SpanKind
 from opentelemetry.instrumentation.utils import unwrap
 
-from MYSDK.bay_frameworks.instrumentation.common import (
+from agentbay.bay_frameworks.instrumentation.common import (
 	CommonInstrumentor,
 	InstrumentorConfig,
 	StandardMetrics,
@@ -10,7 +10,7 @@ from MYSDK.bay_frameworks.instrumentation.common import (
 	create_span,
 	SpanAttributeManager,
 )
-from MYSDK.bay_frameworks.semconv import SpanAttributes
+from agentbay.bay_frameworks.semconv import SpanAttributes
 
 
 _instruments = ("haystack-ai >= 2.0.0",)
@@ -37,7 +37,7 @@ class HaystackInstrumentor(CommonInstrumentor):
 		return StandardMetrics.create_standard_metrics(meter)
 
 	def _custom_wrap(self, **kwargs):
-		from MYSDK.bay_frameworks.instrumentation.common.wrappers import wrap_function_wrapper
+		from agentbay.bay_frameworks.instrumentation.common.wrappers import wrap_function_wrapper
 		attr_manager = self._attribute_manager
 		wrap_function_wrapper(
 			"haystack.components.generators.openai",

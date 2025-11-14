@@ -4,15 +4,15 @@ from opentelemetry.trace import Status, StatusCode
 from opentelemetry.metrics import Meter
 import threading
 
-from MYSDK.bay_frameworks.logging import logger
-from MYSDK.bay_frameworks.instrumentation.common import (
+from agentbay.bay_frameworks.logging import logger
+from agentbay.bay_frameworks.instrumentation.common import (
 	CommonInstrumentor,
 	StandardMetrics,
 	InstrumentorConfig,
 )
-from MYSDK.bay_frameworks.instrumentation.common.wrappers import WrapConfig, wrap_function_wrapper, wrap
+from agentbay.bay_frameworks.instrumentation.common.wrappers import WrapConfig, wrap_function_wrapper, wrap
 
-from MYSDK.bay_frameworks.instrumentation.agentic_frameworks.agno.attributes import (
+from agentbay.bay_frameworks.instrumentation.agentic_frameworks.agno.attributes import (
 	get_agent_run_attributes,
 	get_metrics_attributes,
 	get_team_run_attributes,
@@ -185,7 +185,7 @@ class AgnoInstrumentor(CommonInstrumentor):
 
 
 # Import wrapper builders from the original module (ported and rebranded below)
-from MYSDK.bay_frameworks.instrumentation.agentic_frameworks.agno.wrappers import (
+from agentbay.bay_frameworks.instrumentation.agentic_frameworks.agno.wrappers import (
 	create_streaming_agent_wrapper,
 	create_streaming_agent_async_wrapper,
 	create_streaming_workflow_wrapper,

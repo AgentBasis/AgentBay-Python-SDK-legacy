@@ -1,6 +1,6 @@
 from typing import Optional, Tuple, Dict, Any
-from MYSDK.bay_frameworks.instrumentation.common.attributes import AttributeMap
-from MYSDK.bay_frameworks.semconv import ToolAttributes
+from agentbay.bay_frameworks.instrumentation.common.attributes import AttributeMap
+from agentbay.bay_frameworks.semconv import ToolAttributes
 import json
 
 

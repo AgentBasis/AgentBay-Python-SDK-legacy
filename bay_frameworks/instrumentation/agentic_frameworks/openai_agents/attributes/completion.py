@@ -1,13 +1,13 @@
 from typing import Any, Dict
 
-from MYSDK.bay_frameworks.instrumentation.common.attributes import AttributeMap
-from MYSDK.bay_frameworks.logging import logger
-from MYSDK.bay_frameworks.helpers.serialization import model_to_dict
-from MYSDK.bay_frameworks.semconv import (
+from agentbay.bay_frameworks.instrumentation.common.attributes import AttributeMap
+from agentbay.bay_frameworks.logging import logger
+from agentbay.bay_frameworks.helpers.serialization import model_to_dict
+from agentbay.bay_frameworks.semconv import (
 	SpanAttributes,
 	MessageAttributes,
 )
-from MYSDK.bay_frameworks.instrumentation.agentic_frameworks.openai_agents.attributes.tokens import process_token_usage
+from agentbay.bay_frameworks.instrumentation.agentic_frameworks.openai_agents.attributes.tokens import process_token_usage
 
 
 def get_generation_output_attributes(output: Any) -> Dict[str, Any]:

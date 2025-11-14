@@ -1,6 +1,6 @@
 from typing import Optional, Tuple, Dict, Any
-from MYSDK.bay_frameworks.instrumentation.common.attributes import AttributeMap
-from MYSDK.bay_frameworks.semconv import WorkflowAttributes
+from agentbay.bay_frameworks.instrumentation.common.attributes import AttributeMap
+from agentbay.bay_frameworks.semconv import WorkflowAttributes
 
 
 def get_workflow_run_attributes(

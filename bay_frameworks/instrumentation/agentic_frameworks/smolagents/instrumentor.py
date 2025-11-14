@@ -3,15 +3,15 @@ from opentelemetry.trace import SpanKind
 from opentelemetry.metrics import Meter
 from wrapt import wrap_function_wrapper
 
-from MYSDK.bay_frameworks.instrumentation.common import CommonInstrumentor, StandardMetrics, InstrumentorConfig
-from MYSDK.bay_frameworks.logging import logger
+from agentbay.bay_frameworks.instrumentation.common import CommonInstrumentor, StandardMetrics, InstrumentorConfig
+from agentbay.bay_frameworks.logging import logger
 
 
 LIBRARY_NAME = "bay_frameworks.instrumentation.smolagents"
 LIBRARY_VERSION = "0.1.0"
 
 try:
-	from MYSDK.bay_frameworks.instrumentation.agentic_frameworks.smolagents.attributes.agent import (
+	from agentbay.bay_frameworks.instrumentation.agentic_frameworks.smolagents.attributes.agent import (
 		get_agent_attributes,
 		get_tool_call_attributes,
 		get_planning_step_attributes,
@@ -19,7 +19,7 @@ try:
 		get_agent_stream_attributes,
 		get_managed_agent_attributes,
 	)
-	from MYSDK.bay_frameworks.instrumentation.agentic_frameworks.smolagents.attributes.model import (
+	from agentbay.bay_frameworks.instrumentation.agentic_frameworks.smolagents.attributes.model import (
 		get_model_attributes,
 		get_stream_attributes,
 	)

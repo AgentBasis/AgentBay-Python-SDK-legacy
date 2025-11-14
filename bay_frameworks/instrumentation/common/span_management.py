@@ -9,8 +9,8 @@ from opentelemetry.trace import Tracer, Span, SpanKind, Status, StatusCode, get_
 from opentelemetry.sdk.resources import SERVICE_NAME, TELEMETRY_SDK_NAME, DEPLOYMENT_ENVIRONMENT
 from opentelemetry import context as context_api
 
-from MYSDK.bay_frameworks.logging import logger
-from MYSDK.bay_frameworks.semconv import CoreAttributes
+from agentbay.bay_frameworks.logging import logger
+from agentbay.bay_frameworks.semconv import CoreAttributes
 
 
 class SpanAttributeManager:

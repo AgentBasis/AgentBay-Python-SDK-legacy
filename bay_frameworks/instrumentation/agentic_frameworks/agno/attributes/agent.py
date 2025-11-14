@@ -1,7 +1,7 @@
 from typing import Optional, Tuple, Dict, Any
-from MYSDK.bay_frameworks.instrumentation.common.attributes import AttributeMap
-from MYSDK.bay_frameworks.semconv import SpanAttributes, AgentAttributes, ToolAttributes
-from MYSDK.bay_frameworks.semconv.span_kinds import AgentOpsSpanKindValues as AgentOpsSpanKind
+from agentbay.bay_frameworks.instrumentation.common.attributes import AttributeMap
+from agentbay.bay_frameworks.semconv import SpanAttributes, AgentAttributes, ToolAttributes
+from agentbay.bay_frameworks.semconv.span_kinds import AgentOpsSpanKindValues as AgentOpsSpanKind
 import json
 
 

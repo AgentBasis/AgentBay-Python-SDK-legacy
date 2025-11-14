@@ -2,11 +2,11 @@ from typing import Collection
 
 from opentelemetry import trace
 from opentelemetry.instrumentation.instrumentor import BaseInstrumentor  # type: ignore
-from MYSDK.bay_frameworks.instrumentation.agentic_frameworks.openai_agents import LIBRARY_VERSION
+from agentbay.bay_frameworks.instrumentation.agentic_frameworks.openai_agents import LIBRARY_VERSION
 
-from MYSDK.bay_frameworks.logging import logger
-from MYSDK.bay_frameworks.instrumentation.agentic_frameworks.openai_agents.processor import OpenAIAgentsProcessor
-from MYSDK.bay_frameworks.instrumentation.agentic_frameworks.openai_agents.exporter import OpenAIAgentsExporter
+from agentbay.bay_frameworks.logging import logger
+from agentbay.bay_frameworks.instrumentation.agentic_frameworks.openai_agents.processor import OpenAIAgentsProcessor
+from agentbay.bay_frameworks.instrumentation.agentic_frameworks.openai_agents.exporter import OpenAIAgentsExporter
 
 
 class OpenAIAgentsInstrumentor(BaseInstrumentor):

@@ -9,7 +9,7 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.instrumentation.utils import unwrap
 from wrapt import wrap_function_wrapper
 
-from MYSDK.bay_frameworks.semconv import (
+from agentbay.bay_frameworks.semconv import (
 	SpanAttributes,
 	WorkflowAttributes,
 	MessageAttributes,

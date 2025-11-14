@@ -8,22 +8,22 @@ from opentelemetry.metrics import Meter
 from opentelemetry.trace import SpanKind as OTelSpanKind
 from opentelemetry import trace
 
-from MYSDK.bay_frameworks.instrumentation.common import (
+from agentbay.bay_frameworks.instrumentation.common import (
 	CommonInstrumentor,
 	InstrumentorConfig,
 	StandardMetrics,
 )
-from MYSDK.bay_frameworks.instrumentation.common.span_management import SpanAttributeManager
-from MYSDK.bay_frameworks.instrumentation.common.wrappers import (
+from agentbay.bay_frameworks.instrumentation.common.span_management import SpanAttributeManager
+from agentbay.bay_frameworks.instrumentation.common.wrappers import (
 	_finish_span_success,
 	_finish_span_error,
 	_update_span,
 )
-from MYSDK.bay_frameworks.helpers.serialization import safe_serialize, model_to_dict
-from MYSDK.bay_frameworks.instrumentation.agentic_frameworks.xpander.context import XpanderContext
-from MYSDK.bay_frameworks.semconv import SpanAttributes, SpanKind, ToolAttributes
-from MYSDK.bay_frameworks.semconv.message import MessageAttributes
-from MYSDK.bay_frameworks.logging import logger
+from agentbay.bay_frameworks.helpers.serialization import safe_serialize, model_to_dict
+from agentbay.bay_frameworks.instrumentation.agentic_frameworks.xpander.context import XpanderContext
+from agentbay.bay_frameworks.semconv import SpanAttributes, SpanKind, ToolAttributes
+from agentbay.bay_frameworks.semconv.message import MessageAttributes
+from agentbay.bay_frameworks.logging import logger
 
 
 _instruments = ("xpander-sdk >= 1.0.0",)

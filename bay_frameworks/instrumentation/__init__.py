@@ -2,7 +2,7 @@
 
 - Only auto-instruments agentic frameworks (no providers)
 - Guards against double-wrapping via registry and in-flight set
-- Skips MYSDK.Tracker_llm and known provider namespaces to avoid collisions
+- Skips agentbay.Tracker_llm and known provider namespaces to avoid collisions
 """
 
 from typing import Optional, Set, TypedDict
@@ -33,55 +33,55 @@ class InstrumentorConfig(TypedDict):
 # Supported agentic frameworks mapping (module paths to load instrumentors from)
 AGENTIC_LIBRARIES: dict[str, InstrumentorConfig] = {
 	"crewai": {
-		"module_name": "MYSDK.bay_frameworks.instrumentation.agentic_frameworks.crewai",
+		"module_name": "agentbay.bay_frameworks.instrumentation.agentic_frameworks.crewai",
 		"class_name": "CrewaiInstrumentor",
 		"min_version": "0.56.0",
 		"package_name": None,
 	},
 	"ag2": {
-		"module_name": "MYSDK.bay_frameworks.instrumentation.agentic_frameworks.ag2",
+		"module_name": "agentbay.bay_frameworks.instrumentation.agentic_frameworks.ag2",
 		"class_name": "AG2Instrumentor",
 		"min_version": "0.3.2",
 		"package_name": None,
 	},
 	"agents": {  # OpenAI Agents
-		"module_name": "MYSDK.bay_frameworks.instrumentation.agentic_frameworks.openai_agents",
+		"module_name": "agentbay.bay_frameworks.instrumentation.agentic_frameworks.openai_agents",
 		"class_name": "OpenAIAgentsInstrumentor",
 		"min_version": "0.0.1",
 		"package_name": None,
 	},
 	"google.adk": {
-		"module_name": "MYSDK.bay_frameworks.instrumentation.agentic_frameworks.google_adk",
+		"module_name": "agentbay.bay_frameworks.instrumentation.agentic_frameworks.google_adk",
 		"class_name": "GooogleAdkInstrumentor",
 		"min_version": "0.1.0",
 		"package_name": None,
 	},
 	"agno": {
-		"module_name": "MYSDK.bay_frameworks.instrumentation.agentic_frameworks.agno",
+		"module_name": "agentbay.bay_frameworks.instrumentation.agentic_frameworks.agno",
 		"class_name": "AgnoInstrumentor",
 		"min_version": "1.5.8",
 		"package_name": None,
 	},
 	"smolagents": {
-		"module_name": "MYSDK.bay_frameworks.instrumentation.agentic_frameworks.smolagents",
+		"module_name": "agentbay.bay_frameworks.instrumentation.agentic_frameworks.smolagents",
 		"class_name": "SmolagentsInstrumentor",
 		"min_version": "1.0.0",
 		"package_name": None,
 	},
 	"langgraph": {
-		"module_name": "MYSDK.bay_frameworks.instrumentation.agentic_frameworks.langgraph",
+		"module_name": "agentbay.bay_frameworks.instrumentation.agentic_frameworks.langgraph",
 		"class_name": "LanggraphInstrumentor",
 		"min_version": "0.2.0",
 		"package_name": None,
 	},
 	"xpander_sdk": {
-		"module_name": "MYSDK.bay_frameworks.instrumentation.agentic_frameworks.xpander",
+		"module_name": "agentbay.bay_frameworks.instrumentation.agentic_frameworks.xpander",
 		"class_name": "XpanderInstrumentor",
 		"min_version": "1.0.0",
 		"package_name": "xpander-sdk",
 	},
 	"haystack": {
-		"module_name": "MYSDK.bay_frameworks.instrumentation.agentic_frameworks.haystack",
+		"module_name": "agentbay.bay_frameworks.instrumentation.agentic_frameworks.haystack",
 		"class_name": "HaystackInstrumentor",
 		"min_version": "2.0.0",
 		"package_name": "haystack-ai",
@@ -91,7 +91,7 @@ AGENTIC_LIBRARIES: dict[str, InstrumentorConfig] = {
 
 # Skip list: providers and local Tracker_llm
 _SKIP_MODULE_PREFIXES: Set[str] = {
-	"MYSDK.Tracker_llm",
+	"agentbay.Tracker_llm",
 	"openai.resources",
 	"openai.types",
 	"openai._",

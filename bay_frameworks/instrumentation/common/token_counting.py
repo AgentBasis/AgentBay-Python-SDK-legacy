@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional, Any
-from MYSDK.bay_frameworks.semconv import SpanAttributes
+from agentbay.bay_frameworks.semconv import SpanAttributes
 
 
 @dataclass

@@ -1,6 +1,6 @@
 from typing import Any, List, Dict, Optional
-from MYSDK.bay_frameworks.logging import logger
-from MYSDK.bay_frameworks.semconv import (
+from agentbay.bay_frameworks.logging import logger
+from agentbay.bay_frameworks.semconv import (
 	AgentAttributes,
 	WorkflowAttributes,
 	SpanAttributes,
@@ -9,16 +9,16 @@ from MYSDK.bay_frameworks.semconv import (
 	AgentOpsSpanKindValues,
 	ToolStatus,
 )
-from MYSDK.bay_frameworks.helpers import safe_serialize
+from agentbay.bay_frameworks.helpers import safe_serialize
 
-from MYSDK.bay_frameworks.instrumentation.common import AttributeMap, _extract_attributes_from_mapping
-from MYSDK.bay_frameworks.instrumentation.common.attributes import get_common_attributes
-from MYSDK.bay_frameworks.instrumentation.agentic_frameworks.openai_agents import LIBRARY_NAME, LIBRARY_VERSION
-from MYSDK.bay_frameworks.instrumentation.agentic_frameworks.openai_agents.attributes.model import (
+from agentbay.bay_frameworks.instrumentation.common import AttributeMap, _extract_attributes_from_mapping
+from agentbay.bay_frameworks.instrumentation.common.attributes import get_common_attributes
+from agentbay.bay_frameworks.instrumentation.agentic_frameworks.openai_agents import LIBRARY_NAME, LIBRARY_VERSION
+from agentbay.bay_frameworks.instrumentation.agentic_frameworks.openai_agents.attributes.model import (
 	get_model_attributes,
 	get_model_config_attributes,
 )
-from MYSDK.bay_frameworks.instrumentation.agentic_frameworks.openai_agents.attributes.completion import get_generation_output_attributes
+from agentbay.bay_frameworks.instrumentation.agentic_frameworks.openai_agents.attributes.completion import get_generation_output_attributes
 
 
 AGENT_SPAN_ATTRIBUTES: AttributeMap = {
@@ -194,7 +194,7 @@ def get_response_span_attributes(span_data: Any) -> AttributeMap:
 	attributes = _extract_attributes_from_mapping(span_data, RESPONSE_SPAN_ATTRIBUTES)
 	attributes.update(get_common_attributes())
 	if span_data.response:
-		from MYSDK.bay_frameworks.instrumentation.agentic_frameworks.openai_agents.attributes.response import get_response_response_attributes
+		from agentbay.bay_frameworks.instrumentation.agentic_frameworks.openai_agents.attributes.response import get_response_response_attributes
 		response_attrs = get_response_response_attributes(span_data.response)
 		system_prompt = response_attrs.get(SpanAttributes.LLM_OPENAI_RESPONSE_INSTRUCTIONS)
 		prompt_messages = []

@@ -2,9 +2,9 @@ from typing import Any, Dict, Optional, Tuple
 import uuid
 import json
 
-from MYSDK.bay_frameworks.instrumentation.common.attributes import get_common_attributes
-from MYSDK.bay_frameworks.semconv.agent import AgentAttributes
-from MYSDK.bay_frameworks.semconv.tool import ToolAttributes
+from agentbay.bay_frameworks.instrumentation.common.attributes import get_common_attributes
+from agentbay.bay_frameworks.semconv.agent import AgentAttributes
+from agentbay.bay_frameworks.semconv.tool import ToolAttributes
 
 
 def get_agent_attributes(

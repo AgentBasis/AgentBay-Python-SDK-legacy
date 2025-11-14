@@ -1,6 +1,6 @@
 from importlib.metadata import PackageNotFoundError, version
 
-from MYSDK.bay_frameworks.logging import logger
+from agentbay.bay_frameworks.logging import logger
 
 
 def get_bay_frameworks_version():

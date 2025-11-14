@@ -1,6 +1,6 @@
 from typing import Any, Dict
-from MYSDK.bay_frameworks.semconv import SpanAttributes
-from MYSDK.bay_frameworks.instrumentation.common.attributes import AttributeMap, _extract_attributes_from_mapping
+from agentbay.bay_frameworks.semconv import SpanAttributes
+from agentbay.bay_frameworks.instrumentation.common.attributes import AttributeMap, _extract_attributes_from_mapping
 
 
 MODEL_CONFIG_ATTRIBUTES: AttributeMap = {

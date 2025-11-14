@@ -4,8 +4,8 @@ Helper to activate/deactivate Xpander instrumentation explicitly, though
 auto-activation is handled by bay_frameworks.instrumentation orchestrator.
 """
 
-from MYSDK.bay_frameworks.instrumentation.agentic_frameworks.xpander.instrumentor import XpanderInstrumentor
-from MYSDK.bay_frameworks.logging import logger
+from agentbay.bay_frameworks.instrumentation.agentic_frameworks.xpander.instrumentor import XpanderInstrumentor
+from agentbay.bay_frameworks.logging import logger
 
 _instrumentor = None
 

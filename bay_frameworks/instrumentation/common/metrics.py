@@ -1,6 +1,6 @@
 from typing import Any, Dict
 from opentelemetry.metrics import get_meter, Meter
-from MYSDK.bay_frameworks.semconv import Meters
+from agentbay.bay_frameworks.semconv import Meters
 
 
 class MetricsRecorder:

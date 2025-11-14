@@ -1,5 +1,5 @@
 from typing import Optional, Tuple, Dict, Any
-from MYSDK.bay_frameworks.instrumentation.common.attributes import AttributeMap
+from agentbay.bay_frameworks.instrumentation.common.attributes import AttributeMap
 
 
 def get_metrics_attributes(

@@ -1,9 +1,9 @@
 from typing import Dict, Any
 
-from MYSDK.bay_frameworks.logging import logger
+from agentbay.bay_frameworks.logging import logger
 from opentelemetry.metrics import Meter
-from MYSDK.bay_frameworks.instrumentation.common import CommonInstrumentor, StandardMetrics, InstrumentorConfig
-from MYSDK.bay_frameworks.instrumentation.agentic_frameworks.google_adk.patch import patch_adk, unpatch_adk
+from agentbay.bay_frameworks.instrumentation.common import CommonInstrumentor, StandardMetrics, InstrumentorConfig
+from agentbay.bay_frameworks.instrumentation.agentic_frameworks.google_adk.patch import patch_adk, unpatch_adk
 
 
 LIBRARY_NAME = "bay_frameworks.instrumentation.google_adk"

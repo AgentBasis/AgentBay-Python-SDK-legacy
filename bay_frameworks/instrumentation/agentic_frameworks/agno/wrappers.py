@@ -2,7 +2,7 @@ from typing import Any, Optional
 from opentelemetry import trace, context as otel_context
 from opentelemetry.trace import Status, StatusCode
 
-from MYSDK.bay_frameworks.instrumentation.agentic_frameworks.agno.attributes import (
+from agentbay.bay_frameworks.instrumentation.agentic_frameworks.agno.attributes import (
 	get_agent_run_attributes,
 	get_metrics_attributes,
 	get_team_run_attributes,

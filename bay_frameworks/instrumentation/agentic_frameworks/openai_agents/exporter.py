@@ -6,16 +6,16 @@ from opentelemetry.trace import get_tracer, SpanKind, Status, StatusCode, NonRec
 from opentelemetry import trace as trace_api
 from opentelemetry.sdk.trace import Span
 
-from MYSDK.bay_frameworks.logging import logger
-from MYSDK.bay_frameworks.semconv import CoreAttributes
+from agentbay.bay_frameworks.logging import logger
+from agentbay.bay_frameworks.semconv import CoreAttributes
 
-from MYSDK.bay_frameworks.instrumentation.common.attributes import (
+from agentbay.bay_frameworks.instrumentation.common.attributes import (
 	get_base_trace_attributes,
 	get_base_span_attributes,
 )
 
-from MYSDK.bay_frameworks.instrumentation.agentic_frameworks.openai_agents import LIBRARY_NAME, LIBRARY_VERSION
-from MYSDK.bay_frameworks.instrumentation.agentic_frameworks.openai_agents.attributes.common import (
+from agentbay.bay_frameworks.instrumentation.agentic_frameworks.openai_agents import LIBRARY_NAME, LIBRARY_VERSION
+from agentbay.bay_frameworks.instrumentation.agentic_frameworks.openai_agents.attributes.common import (
 	get_span_attributes,
 )
 

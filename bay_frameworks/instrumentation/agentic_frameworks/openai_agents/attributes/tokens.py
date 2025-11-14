@@ -1,8 +1,8 @@
 import json
 from typing import Any, Dict, Optional
 
-from MYSDK.bay_frameworks.semconv import SpanAttributes
-from MYSDK.bay_frameworks.logging import logger
+from agentbay.bay_frameworks.semconv import SpanAttributes
+from agentbay.bay_frameworks.logging import logger
 
 
 def safe_parse(content: str) -> Optional[Dict[str, Any]]:

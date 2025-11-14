@@ -1,9 +1,9 @@
 from typing import Any, Dict, Optional, Tuple
 import json
 
-from MYSDK.bay_frameworks.instrumentation.common.attributes import get_common_attributes
-from MYSDK.bay_frameworks.semconv.message import MessageAttributes
-from MYSDK.bay_frameworks.semconv.span_attributes import SpanAttributes
+from agentbay.bay_frameworks.instrumentation.common.attributes import get_common_attributes
+from agentbay.bay_frameworks.semconv.message import MessageAttributes
+from agentbay.bay_frameworks.semconv.span_attributes import SpanAttributes
 
 
 def get_model_attributes(

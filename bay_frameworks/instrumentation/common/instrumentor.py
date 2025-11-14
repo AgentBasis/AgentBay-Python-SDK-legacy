@@ -6,8 +6,8 @@ from opentelemetry.instrumentation.instrumentor import BaseInstrumentor
 from opentelemetry.trace import Tracer, get_tracer
 from opentelemetry.metrics import Meter, get_meter
 
-from MYSDK.bay_frameworks.instrumentation.common.wrappers import WrapConfig, wrap, unwrap
-from MYSDK.bay_frameworks.logging import logger
+from agentbay.bay_frameworks.instrumentation.common.wrappers import WrapConfig, wrap, unwrap
+from agentbay.bay_frameworks.logging import logger
 
 
 @dataclass

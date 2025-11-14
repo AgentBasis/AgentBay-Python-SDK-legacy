@@ -8,21 +8,21 @@ import contextvars
 import threading
 from opentelemetry import context as otel_context
 
-from MYSDK.bay_frameworks.logging import logger
-from MYSDK.bay_frameworks.instrumentation.common import (
+from agentbay.bay_frameworks.logging import logger
+from agentbay.bay_frameworks.instrumentation.common import (
 	CommonInstrumentor,
 	InstrumentorConfig,
 	StandardMetrics,
 	create_span,
 	SpanAttributeManager,
 )
-from MYSDK.bay_frameworks.instrumentation.agentic_frameworks.ag2 import LIBRARY_NAME, LIBRARY_VERSION
-from MYSDK.bay_frameworks.semconv.message import MessageAttributes
-from MYSDK.bay_frameworks.semconv.span_attributes import SpanAttributes
-from MYSDK.bay_frameworks.semconv.span_kinds import AgentOpsSpanKindValues
-from MYSDK.bay_frameworks.semconv.agent import AgentAttributes
-from MYSDK.bay_frameworks.semconv.workflow import WorkflowAttributes
-from MYSDK.bay_frameworks.semconv.tool import ToolAttributes
+from agentbay.bay_frameworks.instrumentation.agentic_frameworks.ag2 import LIBRARY_NAME, LIBRARY_VERSION
+from agentbay.bay_frameworks.semconv.message import MessageAttributes
+from agentbay.bay_frameworks.semconv.span_attributes import SpanAttributes
+from agentbay.bay_frameworks.semconv.span_kinds import AgentOpsSpanKindValues
+from agentbay.bay_frameworks.semconv.agent import AgentAttributes
+from agentbay.bay_frameworks.semconv.workflow import WorkflowAttributes
+from agentbay.bay_frameworks.semconv.tool import ToolAttributes
 
 
 class AG2Instrumentor(CommonInstrumentor):

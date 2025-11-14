@@ -1,6 +1,6 @@
 from typing import Any
 from opentelemetry.trace import StatusCode
-from MYSDK.bay_frameworks.logging import logger
+from agentbay.bay_frameworks.logging import logger
 
 
 class OpenAIAgentsProcessor:

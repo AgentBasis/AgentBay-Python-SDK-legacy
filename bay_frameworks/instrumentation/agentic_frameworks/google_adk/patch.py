@@ -3,8 +3,8 @@ import wrapt
 from typing import Any
 from opentelemetry.trace import SpanKind as SpanKind
 
-from MYSDK.bay_frameworks.logging import logger
-from MYSDK.bay_frameworks.semconv import SpanAttributes, ToolAttributes, MessageAttributes, AgentAttributes
+from agentbay.bay_frameworks.logging import logger
+from agentbay.bay_frameworks.semconv import SpanAttributes, ToolAttributes, MessageAttributes, AgentAttributes
 
 
 _wrapped_methods = []

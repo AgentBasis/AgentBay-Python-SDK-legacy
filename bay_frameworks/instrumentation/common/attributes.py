@@ -1,7 +1,7 @@
 from typing import runtime_checkable, Protocol, Any, Optional, Dict, TypedDict
-from MYSDK.bay_frameworks.logging import logger
-from MYSDK.bay_frameworks.helpers import safe_serialize, get_bay_frameworks_version
-from MYSDK.bay_frameworks.semconv import (
+from agentbay.bay_frameworks.logging import logger
+from agentbay.bay_frameworks.helpers import safe_serialize, get_bay_frameworks_version
+from agentbay.bay_frameworks.semconv import (
 	CoreAttributes,
 	InstrumentationAttributes,
 	WorkflowAttributes,
