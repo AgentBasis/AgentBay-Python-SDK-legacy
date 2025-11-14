@@ -13,7 +13,6 @@ from agentbay.bay_frameworks.semconv.meters import Meters
 from agentbay.bay_frameworks.semconv.span_kinds import AgentOpsSpanKindValues
 from agentbay.bay_frameworks.semconv.resource import ResourceAttributes
 from agentbay.bay_frameworks.semconv.message import MessageAttributes
-from agentbay.bay_frameworks.semconv.langchain import LangChainAttributes, LangChainAttributeValues
 
 SUPPRESS_LANGUAGE_MODEL_INSTRUMENTATION_KEY = "suppress_language_model_instrumentation"
 __all__ = [
@@ -31,8 +30,6 @@ __all__ = [
 	"AgentOpsSpanKindValues",
 	"ResourceAttributes",
 	"MessageAttributes",
-	"LangChainAttributes",
-	"LangChainAttributeValues",
 ]
 
 
