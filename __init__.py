@@ -142,14 +142,14 @@ def quick_setup(
         exporter: OpenTelemetry exporter type ("console", "otlp", etc.)
         **kwargs: Additional configuration options
     """
-    print("🚀 Initializing AgentBay SDK...")
+    print("Initializing AgentBay SDK...")
     
     # Initialize OpenTelemetry
     init_tracing(exporter=exporter)
     
     # Setup LLM tracking
     if llm_providers:
-        print("📡 Instrumenting LLM providers...")
+        print("Instrumenting LLM providers...")
         
         # Configure LLM privacy
         configure_llm_privacy(
@@ -170,13 +170,13 @@ def quick_setup(
             elif provider.lower() == "grok":
                 instrument_grok()
             else:
-                print(f"⚠️  Unknown LLM provider: {provider}")
+                print(f"Unknown LLM provider: {provider}")
         
-        print(f"✅ LLM tracking enabled for: {', '.join(llm_providers)}")
+        print(f"LLM tracking enabled for: {', '.join(llm_providers)}")
     
     # Setup system monitoring
     if system_monitoring:
-        print("⚙️  Instrumenting system monitoring...")
+        print("Instrumenting system monitoring...")
         
         # Configure system tracking
         configure_system(
@@ -190,15 +190,15 @@ def quick_setup(
         instrument_system(service_name=kwargs.get('service_name', 'agentbay'))
         start_system_monitoring(collection_interval)
         
-        print(f"✅ System monitoring enabled (interval: {collection_interval}s)")
+        print(f"System monitoring enabled (interval: {collection_interval}s)")
     
     # Setup framework instrumentation
     if enable_framework_instrumentation:
-        print("🔧 Enabling agentic framework instrumentation...")
+        print("Enabling agentic framework instrumentation...")
         instrument_all()
-        print("✅ Framework instrumentation enabled (auto-detects: langgraph, crewai, ag2, agno, smolagents, etc.)")
+        print("Framework instrumentation enabled (auto-detects: langgraph, crewai, ag2, agno, smolagents, etc.)")
     
-    print("🎯 AgentBay SDK initialization complete!")
+    print("AgentBay SDK initialization complete!")
     
     return {
         "llm_providers": llm_providers or [],
