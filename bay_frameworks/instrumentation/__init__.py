@@ -173,6 +173,16 @@ def _import_monitor(name, globals=None, locals=None, fromlist=(), level=0):
 
 
 def instrument_all(tracer_provider=None, meter_provider=None) -> None:
+	"""
+	Auto-instrument all detected agentic frameworks.
+	
+	Scans for supported frameworks (langgraph, crewai, ag2, agno, smolagents, etc.)
+	and automatically enables instrumentation when detected.
+	
+	Args:
+		tracer_provider: Optional OpenTelemetry tracer provider
+		meter_provider: Optional OpenTelemetry meter provider
+	"""
 	if builtins.__import__ is not _import_monitor:
 		builtins.__import__ = _import_monitor
 	# Scan already-imported modules
@@ -185,6 +195,7 @@ def instrument_all(tracer_provider=None, meter_provider=None) -> None:
 
 
 def uninstrument_all() -> None:
+	"""Disable instrumentation for all agentic frameworks."""
 	builtins.__import__ = _original_import
 	for inst in _active_instrumentors:
 		try:
@@ -196,6 +207,12 @@ def uninstrument_all() -> None:
 
 
 def get_active_libraries() -> Set[str]:
+	"""
+	Get list of currently instrumented agentic frameworks.
+	
+	Returns:
+		Set of framework package names that are currently instrumented
+	"""
 	active: Set[str] = set()
 	for name, module in sys.modules.items():
 		if not isinstance(name, str):
