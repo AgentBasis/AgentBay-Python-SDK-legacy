@@ -113,6 +113,7 @@ __all__ = [
     "check_system_health",
     "get_system_summary",
     "record_system_snapshot",
+    "system_quick_start",
     
     # Setup utilities
     "init_tracing",
