@@ -151,8 +151,8 @@ def quick_setup(
         collection_interval: System monitoring collection interval in seconds
         privacy_mode: Enable privacy mode for minimal data collection
         enable_network_monitoring: Enable network monitoring (disabled by default)
-        enable_framework_instrumentation: Enable auto-instrumentation for agentic frameworks (langgraph, crewai, etc.)
-        enable_security_monitoring: Enable security monitoring (prompt injection, jailbreak detection, etc.)
+        enable_framework_instrumentation: Enable auto-instrumentation for agentic frameworks
+        enable_security_monitoring: Enable security monitoring (prompt injection, jailbreak detection)
         exporter: OpenTelemetry exporter type ("console", "otlp", etc.)
         **kwargs: Additional configuration options
     """
@@ -244,7 +244,7 @@ def setup_agentbay(config: dict = None):
     Advanced setup for AgentBay SDK with detailed configuration.
     
     Args:
-        config: Configuration dictionary with detailed settings
+        config: Configuration dictionary with detailed settings for LLM, system, and telemetry
     """
     config = config or {}
     

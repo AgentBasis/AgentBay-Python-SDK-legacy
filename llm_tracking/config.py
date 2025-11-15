@@ -21,6 +21,7 @@ settings = _Settings()
 
 
 def configure(*, capture_content: Optional[bool] = None, redactor: Optional[Callable[[str], str]] = None) -> None:
+    """Configure privacy settings for LLM content capture."""
     if capture_content is not None:
         settings.capture_content = bool(capture_content)
     if redactor is not None:
@@ -28,6 +29,7 @@ def configure(*, capture_content: Optional[bool] = None, redactor: Optional[Call
 
 
 def maybe_redact(text: Optional[str]) -> Optional[str]:
+    """Redact text based on privacy settings if configured."""
     if text is None:
         return None
     if not settings.capture_content:
