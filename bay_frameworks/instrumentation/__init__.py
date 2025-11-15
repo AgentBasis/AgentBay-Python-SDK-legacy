@@ -52,7 +52,7 @@ AGENTIC_LIBRARIES: dict[str, InstrumentorConfig] = {
 	},
 	"google.adk": {
 		"module_name": "agentbay.bay_frameworks.instrumentation.agentic_frameworks.google_adk",
-		"class_name": "GooogleAdkInstrumentor",
+		"class_name": "GoogleAdkInstrumentor",
 		"min_version": "0.1.0",
 		"package_name": None,
 	},

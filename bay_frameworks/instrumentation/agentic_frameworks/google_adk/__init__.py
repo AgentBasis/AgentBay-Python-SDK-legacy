@@ -1,5 +1,5 @@
-from .instrumentor import GooogleAdkInstrumentor
+from .instrumentor import GoogleAdkInstrumentor
 
-__all__ = ["GooogleAdkInstrumentor"]
+__all__ = ["GoogleAdkInstrumentor"]
 
 

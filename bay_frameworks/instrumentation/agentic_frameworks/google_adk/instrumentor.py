@@ -10,7 +10,7 @@ LIBRARY_NAME = "bay_frameworks.instrumentation.google_adk"
 LIBRARY_VERSION = "0.1.0"
 
 
-class GooogleAdkInstrumentor(CommonInstrumentor):
+class GoogleAdkInstrumentor(CommonInstrumentor):
 	"""An instrumentor for Google Agent Development Kit (ADK)."""
 
 	def __init__(self):
