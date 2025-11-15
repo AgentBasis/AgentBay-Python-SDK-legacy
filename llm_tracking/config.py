@@ -21,7 +21,13 @@ settings = _Settings()
 
 
 def configure(*, capture_content: Optional[bool] = None, redactor: Optional[Callable[[str], str]] = None) -> None:
-    """Configure privacy settings for LLM content capture."""
+    """
+    Configure privacy settings for LLM content capture.
+    
+    Args:
+        capture_content: If True, capture full prompt/completion content. If False, only metadata.
+        redactor: Optional function to redact sensitive information from captured content.
+    """
     if capture_content is not None:
         settings.capture_content = bool(capture_content)
     if redactor is not None:

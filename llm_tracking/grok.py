@@ -697,10 +697,9 @@ def _wrap_embeddings_create(wrapped, instance, args, kwargs):
 
 
 def instrument_grok():
-    """Instrument OpenAI client for Grok (xAI) tracking.
-
+    """Enable automatic tracking for Grok (xAI) API calls.
+    
     Auto-detects Grok when base_url contains 'api.x.ai'.
-    Can be overridden with LLM_PROVIDER=grok environment variable.
     """
     # Chat completions (sync and async)
     wrap_function_wrapper(
@@ -747,7 +746,7 @@ def instrument_grok():
 
 
 def uninstrument_grok():
-    """Remove Grok instrumentation from OpenAI client."""
+    """Disable Grok tracking."""
     # Chat completions
     otel_unwrap(
         "openai.resources.chat.completions",

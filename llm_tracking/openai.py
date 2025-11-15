@@ -993,7 +993,7 @@ def _parse_run_stream_event(event: Any) -> Dict[str, Any]:
 
 
 def instrument_openai() -> None:
-    """Instrument OpenAI SDK for passive LLM tracking (v1 preferred, v0 fallback)."""
+    """Enable automatic tracking for OpenAI API calls."""
     # Try v1 surfaces first
     try:
         # Chat Completions (sync/async)
@@ -1133,7 +1133,7 @@ def instrument_openai() -> None:
 
 
 def uninstrument_openai() -> None:
-    """Cleanly unwrap OpenAI methods (v1/v0)."""
+    """Disable OpenAI tracking."""
     targets = [
         ("openai.resources.chat.completions", "Completions.create"),
         ("openai.resources.chat.completions", "AsyncCompletions.create"),

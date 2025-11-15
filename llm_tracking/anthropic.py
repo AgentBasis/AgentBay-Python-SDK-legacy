@@ -425,7 +425,7 @@ def _maybe_set_from_event(span, event: Any):
 
 
 def instrument_anthropic() -> None:
-    """Instrument Anthropic SDK: messages/completions (sync/async) and streaming."""
+    """Enable automatic tracking for Anthropic API calls."""
     # Messages.create (modern)
     wrap_function_wrapper(
         "anthropic.resources.messages", "Messages.create", _wrap_method("anthropic.messages.create")
@@ -462,7 +462,7 @@ def instrument_anthropic() -> None:
 
 
 def uninstrument_anthropic() -> None:
-    """Cleanly unwrap Anthropic methods."""
+    """Disable Anthropic tracking."""
     targets = [
         ("anthropic.resources.messages", "Messages.create"),
         ("anthropic.resources.messages", "AsyncMessages.create"),

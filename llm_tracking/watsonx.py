@@ -270,7 +270,7 @@ def _wrap_stream_method(trace_name: str):
 
 
 def instrument_watsonx() -> None:
-    """Instrument IBM watsonx.ai ModelInference methods."""
+    """Enable automatic tracking for IBM watsonx.ai API calls."""
     try:
         base = "ibm_watsonx_ai.foundation_models.inference"
         wrap_function_wrapper(base, "ModelInference.generate", _wrap_method("watsonx.generate"))
@@ -304,6 +304,7 @@ def instrument_watsonx() -> None:
 
 
 def uninstrument_watsonx() -> None:
+    """Disable IBM watsonx.ai tracking."""
     targets = [
         ("ibm_watsonx_ai.foundation_models.inference", "ModelInference.generate"),
         ("ibm_watsonx_ai.foundation_models.inference", "ModelInference.chat"),

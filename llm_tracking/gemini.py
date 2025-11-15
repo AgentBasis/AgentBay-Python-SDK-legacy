@@ -554,7 +554,7 @@ def _wrap_grpc_method(trace_name: str, *, streaming: bool = False):
 
 
 def instrument_gemini() -> None:
-    """Instrument Gemini via both google.genai (new) and google.generativeai (classic) SDKs."""
+    """Enable automatic tracking for Gemini API calls."""
     # New google.genai models surface
     try:
         wrap_function_wrapper("google.genai.models", "Models.generate_content", _wrap_method("gemini.generate_content", "Gemini"))
@@ -649,7 +649,7 @@ def instrument_gemini() -> None:
 
 
 def uninstrument_gemini() -> None:
-    """Cleanly unwrap Gemini methods across both SDKs."""
+    """Disable Gemini tracking."""
     targets = [
         ("google.genai.models", "Models.generate_content"),
         ("google.genai.models", "AsyncModels.generate_content"),
