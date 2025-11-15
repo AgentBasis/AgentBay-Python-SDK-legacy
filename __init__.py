@@ -67,6 +67,13 @@ from .comp_tracking import (
 # OpenTelemetry initialization
 from .llm_tracking.otel import init_tracing
 
+# Agentic Framework Instrumentation
+from .bay_frameworks.instrumentation import (
+    instrument_all,
+    uninstrument_all,
+    get_active_libraries,
+)
+
 # Version info
 __version__ = "1.0.0"
 __author__ = "AgentBay Team"
@@ -104,6 +111,11 @@ __all__ = [
     "init_tracing",
     "quick_setup",
     "setup_agentbay",
+    
+    # Agentic framework instrumentation
+    "instrument_all",
+    "uninstrument_all",
+    "get_active_libraries",
 ]
 
 
@@ -113,11 +125,12 @@ def quick_setup(
     collection_interval: float = 30.0,
     privacy_mode: bool = False,
     enable_network_monitoring: bool = False,
+    enable_framework_instrumentation: bool = False,
     exporter: str = "console",
     **kwargs
 ):
     """
-    Quick setup for AgentBay SDK with both LLM and system tracking.
+    Quick setup for AgentBay SDK with LLM, system, and framework tracking.
     
     Args:
         llm_providers: List of LLM providers to instrument (e.g., ["openai", "anthropic"])
@@ -125,6 +138,7 @@ def quick_setup(
         collection_interval: System monitoring collection interval in seconds
         privacy_mode: Enable privacy mode for minimal data collection
         enable_network_monitoring: Enable network monitoring (disabled by default)
+        enable_framework_instrumentation: Enable auto-instrumentation for agentic frameworks (langgraph, crewai, etc.)
         exporter: OpenTelemetry exporter type ("console", "otlp", etc.)
         **kwargs: Additional configuration options
     """
@@ -178,6 +192,12 @@ def quick_setup(
         
         print(f"✅ System monitoring enabled (interval: {collection_interval}s)")
     
+    # Setup framework instrumentation
+    if enable_framework_instrumentation:
+        print("🔧 Enabling agentic framework instrumentation...")
+        instrument_all()
+        print("✅ Framework instrumentation enabled (auto-detects: langgraph, crewai, ag2, agno, smolagents, etc.)")
+    
     print("🎯 AgentBay SDK initialization complete!")
     
     return {
@@ -185,6 +205,7 @@ def quick_setup(
         "system_monitoring": system_monitoring,
         "collection_interval": collection_interval,
         "privacy_mode": privacy_mode,
+        "framework_instrumentation": enable_framework_instrumentation,
     }
 
 
