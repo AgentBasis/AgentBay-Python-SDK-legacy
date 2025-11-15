@@ -45,6 +45,8 @@ def _safe_set(span, key: str, value: Any):
 
 
 class LLMSpan:
+    """Manual span for tracking custom or unsupported LLM calls."""
+    
     def __init__(self, system: str, model: Optional[str]):
         self._span_cm = TRACER.start_as_current_span("custom.llm", kind=SpanKind.CLIENT)
         self._span = self._span_cm.__enter__()
@@ -124,5 +126,15 @@ class LLMSpan:
 
 
 def start_llm_span(*, system: str = "custom", model: Optional[str] = None) -> LLMSpan:
+    """
+    Create a manual LLM span for custom tracking.
+    
+    Args:
+        system: System identifier for the LLM (e.g., "custom", "my-llm")
+        model: Optional model name/identifier
+    
+    Returns:
+        LLMSpan instance for tracking LLM interactions
+    """
     return LLMSpan(system=system, model=model)
 
