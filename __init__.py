@@ -74,6 +74,13 @@ from .bay_frameworks.instrumentation import (
     get_active_libraries,
 )
 
+# Security Monitoring
+from .security_monitor import (
+    SecurityMonitor,
+    quick_setup_security,
+    setup_security_monitoring,
+)
+
 # Version info
 __version__ = "1.0.0"
 __author__ = "AgentBay Team"
@@ -116,6 +123,11 @@ __all__ = [
     "instrument_all",
     "uninstrument_all",
     "get_active_libraries",
+    
+    # Security monitoring
+    "SecurityMonitor",
+    "quick_setup_security",
+    "setup_security_monitoring",
 ]
 
 
@@ -126,11 +138,12 @@ def quick_setup(
     privacy_mode: bool = False,
     enable_network_monitoring: bool = False,
     enable_framework_instrumentation: bool = False,
+    enable_security_monitoring: bool = False,
     exporter: str = "console",
     **kwargs
 ):
     """
-    Quick setup for AgentBay SDK with LLM, system, and framework tracking.
+    Quick setup for AgentBay SDK with LLM, system, framework, and security tracking.
     
     Args:
         llm_providers: List of LLM providers to instrument (e.g., ["openai", "anthropic"])
@@ -139,6 +152,7 @@ def quick_setup(
         privacy_mode: Enable privacy mode for minimal data collection
         enable_network_monitoring: Enable network monitoring (disabled by default)
         enable_framework_instrumentation: Enable auto-instrumentation for agentic frameworks (langgraph, crewai, etc.)
+        enable_security_monitoring: Enable security monitoring (prompt injection, jailbreak detection, etc.)
         exporter: OpenTelemetry exporter type ("console", "otlp", etc.)
         **kwargs: Additional configuration options
     """
@@ -198,6 +212,20 @@ def quick_setup(
         instrument_all()
         print("Framework instrumentation enabled (auto-detects: langgraph, crewai, ag2, agno, smolagents, etc.)")
     
+    # Setup security monitoring
+    security_monitor_instance = None
+    if enable_security_monitoring:
+        print("Enabling security monitoring...")
+        security_monitor_instance = quick_setup_security(
+            enable_context_monitoring=kwargs.get('enable_context_monitoring', True),
+            enable_compliance_tracking=kwargs.get('enable_compliance_tracking', True),
+            risk_threshold=kwargs.get('risk_threshold', 0.7),
+            alert_webhook=kwargs.get('alert_webhook'),
+            privacy_mode=privacy_mode,
+            **kwargs.get('security_config', {})
+        )
+        print("Security monitoring enabled (prompt injection, jailbreak detection, compliance tracking)")
+    
     print("AgentBay SDK initialization complete!")
     
     return {
@@ -206,6 +234,8 @@ def quick_setup(
         "collection_interval": collection_interval,
         "privacy_mode": privacy_mode,
         "framework_instrumentation": enable_framework_instrumentation,
+        "security_monitoring": enable_security_monitoring,
+        "security_monitor": security_monitor_instance,
     }
 
 
