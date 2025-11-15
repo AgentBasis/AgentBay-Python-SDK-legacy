@@ -56,8 +56,13 @@ from .analyzers import (
 from .reporting import SecurityReporter, AuditLogger
 from .telemetry import SecurityTelemetryEmitter, create_logging_telemetry_handler
 
-# Version info
-__version__ = "1.0.0"
+# Version info (imported from main package - single source of truth)
+try:
+    from agentbay import __version__
+except ImportError:
+    # Fallback if main package not available
+    __version__ = "1.0.0"
+
 __author__ = "AgentBay Security Team"
 __description__ = "Advanced Agent Security Monitoring System"
 

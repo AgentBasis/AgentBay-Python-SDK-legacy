@@ -4,6 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "agentbay"
+# NOTE: This version should match __version__ in _version.py (single source of truth)
+# When updating version, update _version.py first, then sync this value
 version = "1.0.0"
 description = "Complete AI Agent and System Monitoring SDK"
 readme = "README.md"

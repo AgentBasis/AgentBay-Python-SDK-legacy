@@ -81,8 +81,8 @@ from .security_monitor import (
     setup_security_monitoring,
 )
 
-# Version info
-__version__ = "1.0.0"
+# Version info (imported from _version.py - single source of truth)
+from ._version import __version__
 __author__ = "AgentBay Team"
 __description__ = "Complete AI Agent and System Monitoring SDK"
 
