@@ -1,4 +1,5 @@
 # AgentBay Python SDK
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/AgentBay-AI/AgentBay-Python-SDK)
 
 Complete AI Agent Monitoring Solution - Track LLM usage, system resources, agentic frameworks, and security events.
 
