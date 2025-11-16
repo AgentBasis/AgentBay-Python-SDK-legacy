@@ -140,7 +140,9 @@ def quick_setup(
     enable_network_monitoring: bool = False,
     enable_framework_instrumentation: bool = False,
     enable_security_monitoring: bool = False,
-    exporter: str = "console",
+    exporter: str = "otlp-http",
+    endpoint: str = None,
+    api_key: str = None,
     **kwargs
 ):
     """
@@ -154,13 +156,28 @@ def quick_setup(
         enable_network_monitoring: Enable network monitoring (disabled by default)
         enable_framework_instrumentation: Enable auto-instrumentation for agentic frameworks
         enable_security_monitoring: Enable security monitoring (prompt injection, jailbreak detection)
-        exporter: OpenTelemetry exporter type ("console", "otlp", etc.)
+        exporter: OpenTelemetry exporter type ("console" or "otlp-http", default: "otlp-http")
+        endpoint: OTLP HTTP endpoint (defaults to AgentBay backend or AGENTBAY_ENDPOINT env var)
+        api_key: API key for authentication (defaults to AGENTBAY_API_KEY env var)
         **kwargs: Additional configuration options
     """
+    import os
+    
     print("Initializing AgentBay SDK...")
     
+    # Get API key from parameter or environment variable
+    resolved_api_key = api_key or os.getenv("AGENTBAY_API_KEY")
+    
+    # Validate API key is present (required for otlp-http exporter)
+    if exporter == "otlp-http" and not resolved_api_key:
+        raise ValueError(
+            "AGENTBAY_API_KEY is required. "
+            "Please set it as an environment variable: export AGENTBAY_API_KEY=your-key-here "
+            "or pass it as a parameter: quick_setup(api_key='your-key-here')"
+        )
+    
     # Initialize OpenTelemetry
-    init_tracing(exporter=exporter)
+    init_tracing(exporter=exporter, endpoint=endpoint, api_key=resolved_api_key)
     
     # Setup LLM tracking
     if llm_providers:
@@ -255,9 +272,11 @@ def setup_agentbay(config: dict = None):
     telemetry_config = config.get('telemetry', {})
     
     # Initialize telemetry
+    telemetry_options = telemetry_config.get('options', {})
     init_tracing(
-        exporter=telemetry_config.get('exporter', 'console'),
-        **telemetry_config.get('options', {})
+        exporter=telemetry_config.get('exporter', 'otlp-http'),
+        endpoint=telemetry_options.get('endpoint'),
+        api_key=telemetry_options.get('api_key'),
     )
     
     # Setup LLM tracking
