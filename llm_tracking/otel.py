@@ -15,7 +15,7 @@ except Exception:  # pragma: no cover
     OTLPHTTPExporter = None  # type: ignore
 
 # Default AgentBay backend endpoint
-DEFAULT_AGENTBAY_ENDPOINT = "https://api.agentbay.com/v1/traces"
+DEFAULT_AGENTBAY_ENDPOINT = "https://api.agentbay.com/v1/traces" # TODO: Make this configurable, this is a placeholder for now
 
 
 def _get_endpoint(endpoint: Optional[str] = None) -> str:
