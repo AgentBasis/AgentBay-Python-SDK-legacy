@@ -1,4 +1,5 @@
-# AgentBay Python SDK
+# AgentBay Python SDK (Legacy)
+Latest SDK: https://github.com/AgentBasis/agentbasis-python-sdk
 
 Complete AI Agent Monitoring Solution - Track LLM usage, system resources, agentic frameworks, and security events.
 
